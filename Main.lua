@@ -8,19 +8,38 @@ local window = DrRayLibrary:Load("Gacha UI", "Default")
 local tabGacha = DrRayLibrary.newTab("Gacha", "ImageIdHere")
 
 -- Toggle de Auto Gacha (Swords)
-local autoGacha = false
+local autoGachaSwords = false
 tabGacha.newToggle("Auto Gacha (Swords)", "Ativa o gacha automático da aba Swords", false, function(state)
-    autoGacha = state
-    if autoGacha then
+    autoGachaSwords = state
+    if autoGachaSwords then
         task.spawn(function()
-            while autoGacha do
+            while autoGachaSwords do
                 local args = {{
                     Open_Amount = 2,
                     Action = "_Gacha_Activate",
                     Name = "Swords"
                 }}
                 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("To_Server"):FireServer(unpack(args))
-                task.wait(1) -- ajuste o delay se necessário
+                task.wait(0.2)
+            end
+        end)
+    end
+end)
+
+-- Toggle de Auto Gacha (Dragon_Race)
+local autoGachaDragon = false
+tabGacha.newToggle("Auto Gacha (Dragon_Race)", "Ativa o gacha automático da aba Dragon_Race", false, function(state)
+    autoGachaDragon = state
+    if autoGachaDragon then
+        task.spawn(function()
+            while autoGachaDragon do
+                local args = {{
+                    Open_Amount = 2,
+                    Action = "_Gacha_Activate",
+                    Name = "Dragon_Race"
+                }}
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("To_Server"):FireServer(unpack(args))
+                task.wait(0.2)
             end
         end)
     end
