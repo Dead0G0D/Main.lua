@@ -63,3 +63,22 @@ tabGacha.newToggle("Auto Gacha (Saiyan_Evolution)", "Ativa o gacha automático d
         end)
     end
 end)
+
+-- Toggle de Auto Gacha (Demon_Fruits)
+local autoGachaDemon = false
+tabGacha.newToggle("Auto Gacha (Demon_Fruits)", "Ativa o gacha automático da aba Demon_Fruits", false, function(state)
+    autoGachaDemon = state
+    if autoGachaDemon then
+        task.spawn(function()
+            while autoGachaDemon do
+                local args = {{
+                    Open_Amount = 2,
+                    Action = "_Gacha_Activate",
+                    Name = "Demon_Fruits"
+                }}
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("To_Server"):FireServer(unpack(args))
+                task.wait(0.2)
+            end
+        end)
+    end
+end)
