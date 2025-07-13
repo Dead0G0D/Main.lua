@@ -1,0 +1,272 @@
+--
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+--
+local Window = Fluent:CreateWindow({
+    Title = "Anime Storm Simulator",
+    SubTitle = "By latency",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(450, 350),
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+--
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "sword" }),
+    Misc = Window:AddTab({ Title = "Misc", Icon = "clock" }),
+    Trials = Window:AddTab({ Title = "Trials", Icon = "flame" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+local Options = Fluent.Options
+
+--
+local autoClick = false
+Tabs.Main:AddToggle("AutoClickDamage", {
+    Title = "Auto Click + Damage",
+    Default = false,
+    Callback = function(state)
+        autoClick = state
+        task.spawn(function()
+            while autoClick do
+                local args = { "GainStrength" }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Input"):FireServer(unpack(args))
+                task.wait()
+            end
+        end)
+    end
+})
+
+--
+local selectedWorld = "Dbz"
+local function getWorlds()
+    local result = {}
+    for _, folder in ipairs(workspace:WaitForChild("Npc"):GetChildren()) do
+        if folder:IsA("Folder") then
+            table.insert(result, folder.Name)
+        end
+    end
+    return result
+end
+
+Tabs.Main:AddDropdown("SelectWorld", {
+    Title = "Select World",
+    Values = getWorlds(),
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedWorld = value
+    end
+})
+
+--
+local selectedEnemy = nil
+local function getNpcListFromWorld()
+    local npcNames = {}
+    local folder = workspace:WaitForChild("Npc"):FindFirstChild(selectedWorld)
+    if folder then
+        local added = {}
+        for _, npc in ipairs(folder:GetChildren()) do
+            if npc:IsA("Model") and not added[npc.Name] then
+                table.insert(npcNames, npc.Name)
+                added[npc.Name] = true
+            end
+        end
+    end
+    return npcNames
+end
+
+local enemyDropdown = Tabs.Main:AddDropdown("EnemyDropdown", {
+    Title = "Enemies",
+    Values = getNpcListFromWorld(),
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedEnemy = value
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Refresh Enemies",
+    Description = "Refresh lol",
+    Callback = function()
+        enemyDropdown:SetValues(getNpcListFromWorld())
+    end
+})
+
+-- 
+local function getAllNPCsWithName(targetName)
+    local all = {}
+
+    -- 
+    local npcFolders = workspace:FindFirstChild("Npc"):GetChildren()
+    for _, folder in ipairs(npcFolders) do
+        if folder:IsA("Folder") then
+            for _, npc in ipairs(folder:GetChildren()) do
+                if npc:IsA("Model") and npc.Name == targetName then
+                    table.insert(all, npc)
+                end
+            end
+        end
+    end
+
+    -- 
+    local hidden = game:GetService("ReplicatedStorage"):FindFirstChild("HiddenNpcs")
+    if hidden then
+        for _, npc in ipairs(hidden:GetChildren()) do
+            if npc:IsA("Model") and npc.Name == targetName then
+                table.insert(all, npc)
+            end
+        end
+    end
+
+    return all
+end
+
+-- Auto Farm Enemies
+local autoFarm = false
+Tabs.Main:AddToggle("AutoFarmEnemies", {
+    Title = "Auto Farm Enemies",
+    Default = false,
+    Callback = function(state)
+        autoFarm = state
+        task.spawn(function()
+            while autoFarm do
+                if selectedEnemy then
+                    for _, npc in ipairs(getAllNPCsWithName(selectedEnemy)) do
+                        if not autoFarm then break end
+                        if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") then
+                            local char = game.Players.LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 1))
+                            end
+                            repeat
+                                task.wait(0.2)
+                            until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
+                        end
+                    end
+                end
+                task.wait(0.4)
+            end
+        end)
+    end
+})
+
+--
+local selectedEgg = "Dbz"
+Tabs.Main:AddDropdown("SelectEgg", {
+    Title = "Select Egg",
+    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jjk", "DemonSlayer""OnePiece" },
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedEgg = value
+    end
+})
+
+-- Auto Open Eggs
+local autoEgg = false
+Tabs.Main:AddToggle("AutoOpenEggs", {
+    Title = "Auto Open Eggs",
+    Default = false,
+    Callback = function(state)
+        autoEgg = state
+        task.spawn(function()
+            while autoEgg do
+                local args = { "Hatch", selectedEgg }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Egg"):WaitForChild("EggHatch"):InvokeServer(unpack(args))
+                task.wait(0.2)
+            end
+        end)
+    end
+})
+
+-- Auto Collect Rewards
+local autoCollectRewards = false
+Tabs.Misc:AddToggle("AutoCollectTimeRewards", {
+    Title = "Auto Collect TimeRewards",
+    Default = false,
+    Callback = function(state)
+        autoCollectRewards = state
+        task.spawn(function()
+            while autoCollectRewards do
+                for i = 1, 8 do
+                    local args = { "Reward" .. i }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TimedRewards"):FireServer(unpack(args))
+                    task.wait(1)
+                end
+                task.wait(600)
+            end
+        end)
+    end
+})
+
+-- Auto Rankup
+local autoRankup = false
+Tabs.Misc:AddToggle("AutoRankup", {
+    Title = "Auto Rankup",
+    Default = false,
+    Callback = function(state)
+        autoRankup = state
+        task.spawn(function()
+            while autoRankup do
+                local args = { "Rebirth" }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rebirth"):FireServer(unpack(args))
+                task.wait(10)
+            end
+        end)
+    end
+})
+
+-- Auto Farm Trials
+local autoTrialFarm = false
+Tabs.Trials:AddToggle("AutoFarmTrials", {
+    Title = "Auto Farm Trials",
+    Default = false,
+    Callback = function(state)
+        autoTrialFarm = state
+        task.spawn(function()
+            while autoTrialFarm do
+                local folder = workspace:FindFirstChild("TrialRoomNpc") and workspace.TrialRoomNpc:FindFirstChild("Easy")
+                if folder then
+                    for _, npc in ipairs(folder:GetChildren()) do
+                        if not autoTrialFarm then break end
+                        if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") then
+                            local char = game.Players.LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 1))
+                            end
+                            repeat
+                                task.wait(0.2)
+                            until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoTrialFarm
+                        end
+                    end
+                end
+                task.wait(0.2)
+            end
+        end)
+    end
+})
+
+-- Configs
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/AnimeStorm")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+Tabs.Main:ForceCanvas()
+
+Fluent:Notify({
+    Title = "Script Atualizado",
+    Content = "Auto Rankup incluído com sucesso!",
+    Duration = 5
+})
+
+SaveManager:LoadAutoloadConfig()
