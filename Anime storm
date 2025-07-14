@@ -8,9 +8,9 @@ local Window = Fluent:CreateWindow({
     Title = "Anime Storm Simulator",
     SubTitle = "By latency",
     TabWidth = 160,
-    Size = UDim2.fromOffset(450, 350),
+    Size = UDim2.fromOffset(500, 350),
     Acrylic = false,
-    Theme = "Dark",
+    Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
