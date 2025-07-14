@@ -160,7 +160,7 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
 local selectedEgg = "Dbz"
 Tabs.Main:AddDropdown("SelectEgg", {
     Title = "Select Egg",
-    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jjk", "DemonSlayer""OnePiece" },
+    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jjk", "DemonSlayer", "OnePiece" },
     Multi = false,
     Default = nil,
     Callback = function(value)
