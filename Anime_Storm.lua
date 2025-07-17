@@ -78,12 +78,12 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                                 char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 3))
                             end
                             repeat
-                                task.wait()
+                                task.wait(0.1)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
                         end
                     end
                 end
-                task.wait(0.1)
+                task.wait(1.5)
             end
         end)
     end
