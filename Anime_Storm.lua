@@ -356,7 +356,7 @@ Tabs.Summer:AddToggle("AutoSummerRush", {
         task.spawn(function()
             while autoSummer do
                 game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "Summer2025")
-                task.wait(2)
+                task.wait(1.5)
                 local char = game.Players.LocalPlayer.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
                     char.HumanoidRootPart.CFrame = CFrame.new(-6276.3252, 2811.78809, -3883.45605, -0.997561932, 0, -0.0697919354, 0, 1, 0, 0.0697919354, 0, -0.997561932)
