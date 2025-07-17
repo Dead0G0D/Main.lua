@@ -274,12 +274,12 @@ Tabs.Trials:AddToggle("AutoFarmTrials", {
                                 char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
                             end
                             repeat
-                                task.wait(1.5)
+                                task.wait(0.2)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not state
                         end
                     end
                 end
-                task.wait(0.2)
+                task.wait(1)
             end
         end)
     end
@@ -379,7 +379,7 @@ Tabs.Summer:AddToggle("AutoSummerRush", {
                     end
                 end
 
-                task.wait(4)
+                task.wait(4.4)
             end
         end)
     end
