@@ -285,28 +285,43 @@ Tabs.Trials:AddToggle("AutoFarmTrials", {
     end
 })
 
-local function getTimerLabel()
-    return workspace:FindFirstChild("Portals")
-        and workspace.Portals:FindFirstChild("Tower")
-        and workspace.Portals.Tower:FindFirstChild("Summer2025")
-        and workspace.Portals.Tower.Summer2025:FindFirstChild("TeleportEffect")
-        and workspace.Portals.Tower.Summer2025.TeleportEffect:FindFirstChild("Timer")
-        and workspace.Portals.Tower.Summer2025.TeleportEffect.Timer:FindFirstChild("Frame")
-        and workspace.Portals.Tower.Summer2025.TeleportEffect.Timer.Frame:FindFirstChild("TextLabel")
-end
+local autoPieceRush = false
+Tabs.Trials:AddToggle("AutoOnePieceRush", {
+    Title = "Auto OnePieceRush",
+    Default = false,
+    Callback = function(state)
+        autoPieceRush = state
+        task.spawn(function()
+            while autoPieceRush do
+                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "OnePiece")
+                task.wait(1.5)
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = CFrame.new(-2591.25806, 6047.97705, -712.478027, 0.241953552, -0, -0.970287859, 0, 1, -0, 0.970287859, 0, 0.241953552)
+                end
 
-local label = getTimerLabel()
+                local npc, timeout = nil, 0
+                repeat
+                    task.wait(1)
+                    timeout += 1
+                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("OnePiece") and workspace.BossRushNpc.OnePiece:FindFirstChild("Kaido")
+                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
 
-local paragraph = Tabs.Summer:AddParagraph({
-    Title = "SummerTower",
-    Content = label and label.Text or "Unavailable"
+                if npc and npc:FindFirstChild("Health") then
+                    while npc and npc.Health and npc.Health.Value > 0 and autoPieceRush do
+                        char = game.Players.LocalPlayer.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
+                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
+                        end
+                        task.wait()
+                    end
+                end
+
+                task.wait(4.4)
+            end
+        end)
+    end
 })
-
-if label then
-    label:GetPropertyChangedSignal("Text"):Connect(function()
-        paragraph:Update(label.Text)
-    end)
-end
 
 local autoSummerTower = false
 local lastRoom = ""
