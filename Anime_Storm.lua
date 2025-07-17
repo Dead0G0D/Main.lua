@@ -379,7 +379,7 @@ Tabs.Summer:AddToggle("AutoSummerRush", {
                     end
                 end
 
-                task.wait(4)
+                task.wait(3.5)
             end
         end)
     end
