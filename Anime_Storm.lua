@@ -3,8 +3,8 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Anime Storm Simulator",
-    SubTitle = "By latency",
+    Title = "Latencyhub",
+    SubTitle = "v0.1",
     TabWidth = 160,
     Size = UDim2.fromOffset(500, 350),
     Acrylic = false,
