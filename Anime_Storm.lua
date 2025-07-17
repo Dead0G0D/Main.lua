@@ -375,11 +375,11 @@ Tabs.Summer:AddToggle("AutoSummerRush", {
                         if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
                             char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
                         end
-                        task.wait()
+                        task.wait(2.5)
                     end
                 end
 
-                task.wait(4)
+                task.wait(6)
             end
         end)
     end
