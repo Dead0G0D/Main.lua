@@ -284,7 +284,7 @@ Tabs.Trials:AddToggle("AutoKimetsuRush", {
     Title = "Auto KimetsuRush",
     Default = false,
     Callback = function(state)
-        autoPieceRush = state
+        autoKimetsuRush = state
         task.spawn(function()
             while autoKimetsuRush do
                 game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "DemonSlayer")
