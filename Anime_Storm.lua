@@ -3,8 +3,8 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Latencyhub",
-    SubTitle = "v0.1",
+    Title = "Anime Storm Simulator",
+    SubTitle = "by Latency",
     TabWidth = 160,
     Size = UDim2.fromOffset(500, 350),
     Acrylic = false,
@@ -21,7 +21,7 @@ local Tabs = {
 }
 
 local Options = Fluent.Options
--- Seção: Toggles
+
 Tabs.Main:AddSection("Toggles")
 local autoClick = false
 Tabs.Main:AddToggle("AutoClickDamage", {
@@ -89,9 +89,7 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
     end
 })
 
--- Seção: Worlds
 Tabs.Main:AddSection(" Worlds")
-
 local selectedWorld = "nothing"
 local function getWorlds()
     local result = {}
@@ -145,9 +143,7 @@ Tabs.Main:AddButton({
     end
 })
 
--- Seção: Eggs
 Tabs.Main:AddSection(" Eggs")
-
 local selectedEgg = "?"
 Tabs.Main:AddDropdown("SelectEgg", {
     Title = "Select Egg",
@@ -174,7 +170,6 @@ Tabs.Main:AddToggle("AutoOpenEggs", {
     end
 })
 
--- MISC
 Tabs.Misc:AddToggle("AutoCollectTimeRewards", {
     Title = "Auto Collect TimeRewards",
     Default = false,
@@ -257,7 +252,6 @@ Tabs.Misc:AddButton({
     end
 })
 
--- TRIALS
 Tabs.Trials:AddToggle("AutoFarmTrials", {
     Title = "Auto Trial",
     Default = false,
@@ -280,6 +274,81 @@ Tabs.Trials:AddToggle("AutoFarmTrials", {
                     end
                 end
                 task.wait(1)
+            end
+        end)
+    end
+})
+
+local autoKimetsuRush = false
+Tabs.Trials:AddToggle("AutoKimetsuRush", {
+    Title = "Auto KimetsuRush",
+    Default = false,
+    Callback = function(state)
+        autoPieceRush = state
+        task.spawn(function()
+            while autoKimetsuRush do
+                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "DemonSlayer")
+                task.wait(1.5)
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = CFrame.new(-181.595001, 7914.17285, -32.5060158, 0.999391913, 0, 0.0348687991, 0, 1, 0, -0.0348687991, 0, 0.999391913)
+                end
+
+                local npc, timeout = nil, 0
+                repeat
+                    task.wait(1)
+                    timeout += 1
+                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("DemonSlayer") and workspace.BossRushNpc.DemonSlayer:FindFirstChild("Muzan")
+                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
+
+                if npc and npc:FindFirstChild("Health") then
+                    while npc and npc.Health and npc.Health.Value > 0 and autoKimetsuRush do
+                        char = game.Players.LocalPlayer.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
+                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
+                        end
+                        task.wait()
+                    end
+                end
+
+                task.wait(4.4)
+            end
+        end)
+    end
+})
+
+local autoJJKRush = false
+Tabs.Trials:AddToggle("AutoJujutsuRush", {
+    Title = "Auto JujutsuRush",
+    Default = false,
+    Callback = function(state)
+        autoJJKRush = state
+        task.spawn(function()
+            while autoJJKRush do
+                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "Jjk")
+                task.wait(1.5)
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = CFrame.new(-181.595001, 7914.17285, -32.5060158, 0.999391913, 0, 0.0348687991, 0, 1, 0, -0.0348687991, 0, 0.999391913)
+                end
+
+                local npc, timeout = nil, 0
+                repeat
+                    task.wait(1)
+                    timeout += 1
+                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("Jjk") and workspace.BossRushNpc.DemonSlayer:FindFirstChild("Maharaga")
+                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
+
+                if npc and npc:FindFirstChild("Health") then
+                    while npc and npc.Health and npc.Health.Value > 0 and autoJJKRush do
+                        char = game.Players.LocalPlayer.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
+                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
+                        end
+                        task.wait()
+                    end
+                end
+                task.wait(4.4)
             end
         end)
     end
@@ -316,7 +385,6 @@ Tabs.Trials:AddToggle("AutoOnePieceRush", {
                         task.wait()
                     end
                 end
-
                 task.wait(4.4)
             end
         end)
@@ -393,14 +461,12 @@ Tabs.Summer:AddToggle("AutoSummerRush", {
                         task.wait()
                     end
                 end
-
                 task.wait(4.4)
             end
         end)
     end
 })
 
--- Configurações
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
 SaveManager:IgnoreThemeSettings()
@@ -409,5 +475,5 @@ SaveManager:SetFolder("FluentScriptHub/AnimeStorm")
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 Window:SelectTab(1)
-Tabs.Main:ForceCanvas()
 SaveManager:LoadAutoloadConfig()
+Tabs.Main:ForceCanvas()
