@@ -3,8 +3,8 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Anime Storm Simulator",
-    SubTitle = "by Latency",
+    Title = "Anime Storm",
+    SubTitle = " In Latency",
     TabWidth = 160,
     Size = UDim2.fromOffset(500, 350),
     Acrylic = false,
@@ -214,42 +214,54 @@ Tabs.Misc:AddToggle("AutoClaimPass", {
 })
 
 Tabs.Misc:AddButton({
-    Title = "Remove Effects",
-    Description = "Remove all VFX effects",
+    Title = "Fps Boost",
+    Description = "Remove all VFX",
     Callback = function()
-        local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
-        local vfx = assets and assets:FindFirstChild("Vfx")
-        if not vfx then
-            Fluent:Notify({
-                Title = "Erro",
-                Content = "Pasta 'Assets.Vfx' não encontrada.",
-                Duration = 4
-            })
-            return
-        end
+    local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
+    local vfx = assets and assets:FindFirstChild("Vfx")
+    local drops = assets and assets:FindFirstChild("Drops")
 
-        local targets = {
-            vfx:FindFirstChild("DeathEffectModel") and vfx.DeathEffectModel:FindFirstChild("DeathEffect"),
-            vfx:FindFirstChild("HitEffectModel") and vfx.HitEffectModel:FindFirstChild("HitEffect"),
-            vfx:FindFirstChild("SpawnEffectModel") and vfx.SpawnEffectModel:FindFirstChild("SpawnEffect")
-        }
+    if not vfx or not drops then
+        Fluent:Notify({
+            Title = "Erro",
+            Content = "Pastas 'Assets.Vfx' ou 'Assets.Drops' não encontradas.",
+            Duration = 4
+        })
+        return
+    end
 
-        for _, effectPart in ipairs(targets) do
-            if effectPart then
-                for _, obj in ipairs(effectPart:GetDescendants()) do
-                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") then
-                        obj:Destroy()
-                    end
+    local targets = {
+        vfx:FindFirstChild("DeathEffectModel") and vfx.DeathEffectModel:FindFirstChild("DeathEffect"),
+        vfx:FindFirstChild("HitEffectModel") and vfx.HitEffectModel:FindFirstChild("HitEffect"),
+        vfx:FindFirstChild("SpawnEffectModel") and vfx.SpawnEffectModel:FindFirstChild("SpawnEffect")
+    }
+
+    for _, effectPart in ipairs(targets) do
+        if effectPart then
+            for _, obj in ipairs(effectPart:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") then
+                    obj:Destroy()
                 end
             end
         end
-
-        Fluent:Notify({
-            Title = "Remoção Completa",
-            Content = "Todos os efeitos visuais foram removidos!",
-            Duration = 3
-        })
     end
+
+    local gemPart = drops:FindFirstChild("GemPart")
+    if gemPart then
+        gemPart:ClearAllChildren()
+    end
+
+    local summerGemPart = drops:FindFirstChild("SummerGemPart")
+    if summerGemPart then
+        summerGemPart:ClearAllChildren()
+    end
+
+    Fluent:Notify({
+        Title = "All Vfx Removed",
+        Content = "Fps Boosted!",
+        Duration = 3
+    })
+end
 })
 
 Tabs.Trials:AddToggle("AutoFarmTrials", {
