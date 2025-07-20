@@ -420,7 +420,7 @@ Tabs.Summer:AddToggle("AutoSummerTower", {
                     lastRoom = currentRoom
                     task.wait(1.5)
 
-                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("Summer2025")
+                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("DemonSlayer")
                     if folder then
                         for _, npc in ipairs(folder:GetChildren()) do
                             if not autoSummerTower then break end
