@@ -1,10 +1,10 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/discoart/FluentPlus/refs/heads/main/Beta.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Anime Storm",
-    SubTitle = " In Latency",
+    Title = "Anime Storm Simulator",
+    SubTitle = "In Latency",
     TabWidth = 160,
     Size = UDim2.fromOffset(500, 350),
     Acrylic = false,
@@ -13,9 +13,8 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "sword" }),
-    Trials = Window:AddTab({ Title = "Trial/Tower/Boss", Icon = "flame" }),
-    Summer = Window:AddTab({ Title = "SummerEvent", Icon = "sun" }),
+    Main = Window:AddTab({ Title = "Farm", Icon = "swords" }),
+    Trials = Window:AddTab({ Title = "GameModes", Icon = "landmark" }),
     Misc = Window:AddTab({ Title = "Misc", Icon = "list" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -147,7 +146,7 @@ Tabs.Main:AddSection(" Eggs")
 local selectedEgg = "?"
 Tabs.Main:AddDropdown("SelectEgg", {
     Title = "Select Egg",
-    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jjk", "DemonSlayer", "OnePiece" },
+    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jojo", "Jjk", "DemonSlayer", "OnePiece" },
     Multi = false,
     Default = nil,
     Callback = function(value)
@@ -213,6 +212,202 @@ Tabs.Misc:AddToggle("AutoClaimPass", {
     end
 })
 
+Tabs.Trials:AddToggle("AutoFarmTrials", {
+    Title = "Auto Trial",
+    Default = false,
+    Callback = function(state)
+        task.spawn(function()
+            while state do
+                local folder = workspace:FindFirstChild("TrialRoomNpc") and workspace.TrialRoomNpc:FindFirstChild("Easy")
+                if folder then
+                    for _, npc in ipairs(folder:GetChildren()) do
+                        if not state then break end
+                        if npc:FindFirstChild("HumanoidRootPart") then
+                            local char = game.Players.LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                            end
+                            repeat
+                                task.wait(0.2)
+                            until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not state
+                        end
+                    end
+                end
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+local autobossesRush = false
+local selectedRush = "?"
+local bossRushData = {
+    OnePiece = {
+        npcName = "Kaido",
+        cframe = CFrame.new(-2591.25806, 6047.97705, -712.478027, 0.241953552, -0, -0.970287859, 0, 1, -0, 0.970287859, 0, 0.241953552)
+    },
+    Jjk = {
+        npcName = "Maharaga",
+        cframe = CFrame.new(-2591.25806, 6047.97705, -712.478027, 0.241953552, -0, -0.970287859, 0, 1, -0, 0.970287859, 0, 0.241953552)
+    },
+    DemonSlayer = {
+        npcName = "Muzan",
+        cframe = CFrame.new(-181.595001, 7914.17285, -32.5060158, 0.999391913, 0, 0.0348687991, 0, 1, 0, -0.0348687991, 0, 0.999391913)
+    },
+    Summer2025 = {
+        npcName = "BrolySummer",
+        cframe = CFrame.new(-6276.3252, 2811.78809, -3883.45605, -0.997561932, 0, -0.0697919354, 0, 1, 0, 0.0697919354, 0, -0.997561932)
+    }
+}
+
+Tabs.Trials:AddDropdown("SelectBossRush", {
+    Title = "Select BossRush",
+    Values = table.getn(bossRushData) > 0 and table.keys(bossRushData) or {"OnePiece", "Summer2025", "DemonSlayer", "Jjk"},
+    Default = nil,
+    Multi = false,
+    Callback = function(value)
+        selectedRush = value
+    end
+})
+
+Tabs.Trials:AddToggle("AutoBossRush", {
+    Title = "Auto BossRush",
+    Default = false,
+    Callback = function(state)
+        autobossesRush = state
+        task.spawn(function()
+            while autobossesRush do
+                local data = bossRushData[selectedRush]
+                if not data then return end
+                
+                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", selectedRush)
+                task.wait(1.7)
+
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = data.cframe
+                end
+
+                local npc, timeout = nil, 0
+                repeat
+                    task.wait(1)
+                    timeout += 1
+                    local folder = workspace:FindFirstChild("BossRushNpc")
+                    local worldFolder = folder and folder:FindFirstChild(selectedRush)
+                    npc = worldFolder and worldFolder:FindFirstChild(data.npcName)
+                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
+
+                if npc and npc:FindFirstChild("Health") then
+                    while npc and npc.Health and npc.Health.Value > 0 and autobossesRush do
+                        char = game.Players.LocalPlayer.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
+                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
+                        end
+                        task.wait()
+                    end
+                end
+
+                task.wait(4.4)
+            end
+        end)
+    end
+})
+
+local autoInvasion = false
+local lastWave = ""
+Tabs.Trials:AddToggle("AutoInvasion", {
+    Title = "Auto Bleach Invasion",
+    Default = false,
+    Callback = function(state)
+        autoInvasion = state
+        task.spawn(function()
+            while autoInvasion do
+                local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
+                local WaveLabel = gui:WaitForChild("InvasionFrame"):WaitForChild("Wave")
+
+                local currentWave = WaveLabel.Text
+                if currentWave ~= lastWave then
+                    lastWave = currentWave
+
+                    -- Verifica se é a última wave
+                    if currentWave == "Wave: 10/10" then
+                        task.wait(1)
+                        -- Executa o remote para iniciar outra invasão
+                        local args = {
+                            "StartUi",
+                            "Bleach"
+                        }
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Invasion"):WaitForChild("InvasionStart"):FireServer(unpack(args))
+
+                        -- Teleporta para o CFrame desejado
+                        local char = game.Players.LocalPlayer.Character
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            char:MoveTo(Vector3.new(6392.59277, 3088.83203, -6815.19287))
+                        end
+                    end
+
+                    -- Farm nos NPCs da wave atual
+                    local folder = workspace:FindFirstChild("InvasionNpc") and workspace.InvasionNpc:FindFirstChild("Bleach")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            if not autoInvasion then break end
+                            if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
+                                local char = game.Players.LocalPlayer.Character
+                                if char and char:FindFirstChild("HumanoidRootPart") then
+                                    char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                                end
+                                repeat
+                                    task.wait()
+                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoInvasion
+                            end
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+local autoSummerTower = false
+local lastRoom = ""
+Tabs.Trials:AddToggle("AutoSummerTower", {
+    Title = "Auto SummerTower",
+    Default = false,
+    Callback = function(state)
+        autoSummerTower = state
+        task.spawn(function()
+            while autoSummerTower do
+                local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
+                local roomLabel = gui:WaitForChild("TowerFrame"):WaitForChild("Room")
+
+                local currentRoom = roomLabel.Text
+                if currentRoom ~= lastRoom then
+                    lastRoom = currentRoom
+                    task.wait(0.1)
+
+                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("Summer2025")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            if not autoSummerTower then break end
+                            if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
+                                local char = game.Players.LocalPlayer.Character
+                                if char and char:FindFirstChild("HumanoidRootPart") then
+                                    char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                                end
+                                repeat
+                                    task.wait()
+                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoSummerTower
+                            end
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
 Tabs.Misc:AddButton({
     Title = "Fps Boost",
     Description = "Remove all VFX",
@@ -220,15 +415,6 @@ Tabs.Misc:AddButton({
     local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
     local vfx = assets and assets:FindFirstChild("Vfx")
     local drops = assets and assets:FindFirstChild("Drops")
-
-    if not vfx or not drops then
-        Fluent:Notify({
-            Title = "Erro",
-            Content = "Pastas 'Assets.Vfx' ou 'Assets.Drops' não encontradas.",
-            Duration = 4
-        })
-        return
-    end
 
     local targets = {
         vfx:FindFirstChild("DeathEffectModel") and vfx.DeathEffectModel:FindFirstChild("DeathEffect"),
@@ -262,221 +448,6 @@ Tabs.Misc:AddButton({
         Duration = 3
     })
 end
-})
-
-Tabs.Trials:AddToggle("AutoFarmTrials", {
-    Title = "Auto Trial",
-    Default = false,
-    Callback = function(state)
-        task.spawn(function()
-            while state do
-                local folder = workspace:FindFirstChild("TrialRoomNpc") and workspace.TrialRoomNpc:FindFirstChild("Easy")
-                if folder then
-                    for _, npc in ipairs(folder:GetChildren()) do
-                        if not state then break end
-                        if npc:FindFirstChild("HumanoidRootPart") then
-                            local char = game.Players.LocalPlayer.Character
-                            if char and char:FindFirstChild("HumanoidRootPart") then
-                                char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
-                            end
-                            repeat
-                                task.wait(0.2)
-                            until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not state
-                        end
-                    end
-                end
-                task.wait(1)
-            end
-        end)
-    end
-})
-
-local autoKimetsuRush = false
-Tabs.Trials:AddToggle("AutoKimetsuRush", {
-    Title = "Auto KimetsuRush",
-    Default = false,
-    Callback = function(state)
-        autoKimetsuRush = state
-        task.spawn(function()
-            while autoKimetsuRush do
-                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "DemonSlayer")
-                task.wait(1.5)
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = CFrame.new(-181.595001, 7914.17285, -32.5060158, 0.999391913, 0, 0.0348687991, 0, 1, 0, -0.0348687991, 0, 0.999391913)
-                end
-
-                local npc, timeout = nil, 0
-                repeat
-                    task.wait(1)
-                    timeout += 1
-                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("DemonSlayer") and workspace.BossRushNpc.DemonSlayer:FindFirstChild("Muzan")
-                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
-
-                if npc and npc:FindFirstChild("Health") then
-                    while npc and npc.Health and npc.Health.Value > 0 and autoKimetsuRush do
-                        char = game.Players.LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
-                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
-                        end
-                        task.wait()
-                    end
-                end
-
-                task.wait(4.4)
-            end
-        end)
-    end
-})
-
-local autoJJKRush = false
-Tabs.Trials:AddToggle("AutoJujutsuRush", {
-    Title = "Auto JujutsuRush",
-    Default = false,
-    Callback = function(state)
-        autoJJKRush = state
-        task.spawn(function()
-            while autoJJKRush do
-                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "Jjk")
-                task.wait(1.5)
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = CFrame.new(-181.595001, 7914.17285, -32.5060158, 0.999391913, 0, 0.0348687991, 0, 1, 0, -0.0348687991, 0, 0.999391913)
-                end
-
-                local npc, timeout = nil, 0
-                repeat
-                    task.wait(1)
-                    timeout += 1
-                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("Jjk") and workspace.BossRushNpc.DemonSlayer:FindFirstChild("Maharaga")
-                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
-
-                if npc and npc:FindFirstChild("Health") then
-                    while npc and npc.Health and npc.Health.Value > 0 and autoJJKRush do
-                        char = game.Players.LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
-                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
-                        end
-                        task.wait()
-                    end
-                end
-                task.wait(4.4)
-            end
-        end)
-    end
-})
-
-local autoPieceRush = false
-Tabs.Trials:AddToggle("AutoOnePieceRush", {
-    Title = "Auto OnePieceRush",
-    Default = false,
-    Callback = function(state)
-        autoPieceRush = state
-        task.spawn(function()
-            while autoPieceRush do
-                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "OnePiece")
-                task.wait(1.5)
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = CFrame.new(-2591.25806, 6047.97705, -712.478027, 0.241953552, -0, -0.970287859, 0, 1, -0, 0.970287859, 0, 0.241953552)
-                end
-
-                local npc, timeout = nil, 0
-                repeat
-                    task.wait(1)
-                    timeout += 1
-                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("OnePiece") and workspace.BossRushNpc.OnePiece:FindFirstChild("Kaido")
-                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
-
-                if npc and npc:FindFirstChild("Health") then
-                    while npc and npc.Health and npc.Health.Value > 0 and autoPieceRush do
-                        char = game.Players.LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
-                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
-                        end
-                        task.wait()
-                    end
-                end
-                task.wait(4.4)
-            end
-        end)
-    end
-})
-
-local autoSummerTower = false
-local lastRoom = ""
-Tabs.Summer:AddToggle("AutoSummerTower", {
-    Title = "Auto SummerTower",
-    Default = false,
-    Callback = function(state)
-        autoSummerTower = state
-        task.spawn(function()
-            while autoSummerTower do
-                local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
-                local roomLabel = gui:WaitForChild("TowerFrame"):WaitForChild("Room")
-
-                local currentRoom = roomLabel.Text
-                if currentRoom ~= lastRoom then
-                    lastRoom = currentRoom
-                    task.wait(1.5)
-
-                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("Summer2025")
-                    if folder then
-                        for _, npc in ipairs(folder:GetChildren()) do
-                            if not autoSummerTower then break end
-                            if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
-                                local char = game.Players.LocalPlayer.Character
-                                if char and char:FindFirstChild("HumanoidRootPart") then
-                                    char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
-                                end
-                                repeat
-                                    task.wait()
-                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoSummerTower
-                            end
-                        end
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local autoSummer = false
-Tabs.Summer:AddToggle("AutoSummerRush", {
-    Title = "Auto SummerRush",
-    Default = false,
-    Callback = function(state)
-        autoSummer = state
-        task.spawn(function()
-            while autoSummer do
-                game:GetService("ReplicatedStorage").Remotes.BossRush.BossRushStart:FireServer("StartUi", "Summer2025")
-                task.wait(1.5)
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = CFrame.new(-6276.3252, 2811.78809, -3883.45605, -0.997561932, 0, -0.0697919354, 0, 1, 0, 0.0697919354, 0, -0.997561932)
-                end
-
-                local npc, timeout = nil, 0
-                repeat
-                    task.wait(1)
-                    timeout += 1
-                    npc = workspace:FindFirstChild("BossRushNpc") and workspace.BossRushNpc:FindFirstChild("Summer2025") and workspace.BossRushNpc.Summer2025:FindFirstChild("BrolySummer")
-                until npc and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") or timeout >= 45
-
-                if npc and npc:FindFirstChild("Health") then
-                    while npc and npc.Health and npc.Health.Value > 0 and autoSummer do
-                        char = game.Players.LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("HumanoidRootPart") then
-                            char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, -9, 0))
-                        end
-                        task.wait()
-                    end
-                end
-                task.wait(4.4)
-            end
-        end)
-    end
 })
 
 SaveManager:SetLibrary(Fluent)
