@@ -13,8 +13,9 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Farm", Icon = "swords" }),
+    Main = Window:AddTab({ Title = "Farms", Icon = "sword" }),
     Trials = Window:AddTab({ Title = "GameModes", Icon = "landmark" }),
+    Up = Window:AddTab({ Title = "Upgrades", Icon = "power" }),
     Misc = Window:AddTab({ Title = "Misc", Icon = "list" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -37,7 +38,7 @@ Tabs.Main:AddToggle("AutoClickDamage", {
     end
 })
 
-local selectedEnemy = nil
+local selectedEnemies = {}
 local function getAllNPCsWithName(name)
     local all = {}
     for _, folder in ipairs(workspace.Npc:GetChildren()) do
@@ -49,7 +50,7 @@ local function getAllNPCsWithName(name)
             end
         end
     end
-    local hidden = game:GetService("ReplicatedStorage"):FindFirstChild("HiddenNpcs")
+local hidden = game:GetService("ReplicatedStorage"):FindFirstChild("HiddenNpcs")
     if hidden then
         for _, npc in ipairs(hidden:GetChildren()) do
             if npc:IsA("Model") and npc.Name == name then
@@ -62,14 +63,14 @@ end
 
 local autoFarm = false
 Tabs.Main:AddToggle("AutoFarmEnemies", {
-    Title = "Auto Farm Enemies",
+    Title = "Auto World Enemies",
     Default = false,
     Callback = function(state)
         autoFarm = state
         task.spawn(function()
             while autoFarm do
-                if selectedEnemy then
-                    for _, npc in ipairs(getAllNPCsWithName(selectedEnemy)) do
+                for _, enemyName in ipairs(selectedEnemies) do
+                    for _, npc in ipairs(getAllNPCsWithName(enemyName)) do
                         if not autoFarm then break end
                         if npc:FindFirstChild("HumanoidRootPart") then
                             local char = game.Players.LocalPlayer.Character
@@ -82,7 +83,7 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                         end
                     end
                 end
-                task.wait(1.5)
+                task.wait(0.5)
             end
         end)
     end
@@ -124,21 +125,26 @@ local function getNpcListFromWorld()
     return names
 end
 
-local enemyDropdown = Tabs.Main:AddDropdown("EnemyDropdown", {
+local enemyMultiDropdown = Tabs.Main:AddDropdown("EnemyMultiDropdown", {
     Title = "Enemies",
     Values = getNpcListFromWorld(),
-    Multi = false,
-    Default = nil,
+    Multi = true,
+    Default = {},
     Callback = function(value)
-        selectedEnemy = value
+        selectedEnemies = {}
+        for enemyName, active in pairs(value) do
+            if active then
+                table.insert(selectedEnemies, enemyName)
+            end
+        end
     end
 })
 
 Tabs.Main:AddButton({
     Title = "Refresh Enemies",
-    Description = "Refresh lol",
+    Description = "Refresh",
     Callback = function()
-        enemyDropdown:SetValues(getNpcListFromWorld())
+        enemyMultiDropdown:SetValues(getNpcListFromWorld())
     end
 })
 
@@ -146,7 +152,7 @@ Tabs.Main:AddSection(" Eggs")
 local selectedEgg = "?"
 Tabs.Main:AddDropdown("SelectEgg", {
     Title = "Select Egg",
-    Values = { "Dbz", "Naruto", "Bleach", "Summer2025", "Jojo", "Jjk", "DemonSlayer", "OnePiece" },
+    Values = { "Dbz", "Naruto", "Bleach", "Hxh", "Summer2025", "Jojo", "Jjk", "DemonSlayer", "OnePiece" },
     Multi = false,
     Default = nil,
     Callback = function(value)
@@ -169,21 +175,60 @@ Tabs.Main:AddToggle("AutoOpenEggs", {
     end
 })
 
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local TimedRewardsConfig = require(ReplicatedStorage.Configs.TimedRewardsConfig)
+local player = Players.LocalPlayer
+
+local totalRewards = 8
+local collected = {}
+
 Tabs.Misc:AddToggle("AutoCollectTimeRewards", {
     Title = "Auto Collect TimeRewards",
     Default = false,
     Callback = function(state)
-        task.spawn(function()
-            while state do
-                for i = 1, 8 do
-                    game.ReplicatedStorage.Remotes.TimedRewards:FireServer("Reward" .. i)
-                    task.wait(1)
+        _G.AutoCollectRewards = state
+        if state then
+            task.spawn(function()
+                while _G.AutoCollectRewards do
+                    for i = 1, totalRewards do
+                        local rewardName = "Reward" .. i
+                        if not collected[rewardName] and player.CurrentTotalPlaytime.Value >= TimedRewardsConfig[rewardName].TimeRequired then
+                            ReplicatedStorage.Remotes.TimedRewards:FireServer(rewardName)
+                            task.wait(1)
+                        end
+                    end
+                    task.wait(10)
                 end
-                task.wait(600)
-            end
-        end)
+            end)
+        end
     end
 })
+
+Tabs.Misc:AddToggle("AutoRejoinAfterRewards", {
+    Title = "Auto Rejoin",
+    Default = false,
+    Callback = function(state)
+        _G.AutoRejoin = state
+        if state then
+            task.spawn(function()
+                while _G.AutoRejoin do
+                    local lastRewardTime = TimedRewardsConfig["Reward" .. totalRewards].TimeRequired
+                    if player.CurrentTotalPlaytime.Value >= lastRewardTime + 500 then
+                        TeleportService:Teleport(game.PlaceId, player)
+                        break
+                    end
+                    task.wait(25)
+                end
+            end)
+        end
+    end
+})
+
+ReplicatedStorage.Remotes.TimedRewards.OnClientEvent:Connect(function(rewardName)
+    collected[rewardName] = true
+end)
 
 Tabs.Misc:AddToggle("AutoRankup", {
     Title = "Auto Rankup",
@@ -248,7 +293,7 @@ local bossRushData = {
     },
     Jjk = {
         npcName = "Maharaga",
-        cframe = CFrame.new(-2591.25806, 6047.97705, -712.478027, 0.241953552, -0, -0.970287859, 0, 1, -0, 0.970287859, 0, 0.241953552)
+        cframe = CFrame.new(-3240.84424, 6738.77246, 1901.71997, 0.207885921, -0, -0.97815311, 0, 1, -0, 0.97815311, 0, 0.207885921)
     },
     DemonSlayer = {
         npcName = "Muzan",
@@ -314,82 +359,93 @@ Tabs.Trials:AddToggle("AutoBossRush", {
 })
 
 local autoInvasion = false
+local ultimaWave = "Wave: 10/10"
+local cframeDestino = Vector3.new(6392.59277, 3088.83203, -6815.19287)
 local lastWave = ""
+
 Tabs.Trials:AddToggle("AutoInvasion", {
-    Title = "Auto Bleach Invasion",
+    Title = "Auto Invasion Bleach",
     Default = false,
     Callback = function(state)
         autoInvasion = state
         task.spawn(function()
             while autoInvasion do
                 local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
-                local WaveLabel = gui:WaitForChild("InvasionFrame"):WaitForChild("Wave")
+                local invasionFrame = gui:FindFirstChild("InvasionFrame")
+                local alreadyInInvasion = invasionFrame and invasionFrame.Visible
 
-                local currentWave = WaveLabel.Text
-                if currentWave ~= lastWave then
-                    lastWave = currentWave
-
-                    -- Verifica se é a última wave
-                    if currentWave == "Wave: 10/10" then
-                        task.wait(1)
-                        -- Executa o remote para iniciar outra invasão
-                        local args = {
-                            "StartUi",
-                            "Bleach"
-                        }
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Invasion"):WaitForChild("InvasionStart"):FireServer(unpack(args))
-
-                        -- Teleporta para o CFrame desejado
-                        local char = game.Players.LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") then
-                            char:MoveTo(Vector3.new(6392.59277, 3088.83203, -6815.19287))
-                        end
+                if not alreadyInInvasion then
+                    local args = {"StartUi", "Bleach"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Invasion"):WaitForChild("InvasionStart"):FireServer(unpack(args))
+                    task.wait(2.5)
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char:MoveTo(cframeDestino)
                     end
+                end
 
-                    -- Farm nos NPCs da wave atual
-                    local folder = workspace:FindFirstChild("InvasionNpc") and workspace.InvasionNpc:FindFirstChild("Bleach")
-                    if folder then
-                        for _, npc in ipairs(folder:GetChildren()) do
-                            if not autoInvasion then break end
-                            if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
-                                local char = game.Players.LocalPlayer.Character
-                                if char and char:FindFirstChild("HumanoidRootPart") then
-                                    char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
+                invasionFrame = gui:WaitForChild("InvasionFrame")
+                local WaveLabel = invasionFrame:WaitForChild("Wave")
+                local TimerLabel = invasionFrame:WaitForChild("Timer")
+
+                while autoInvasion and TimerLabel.Text == "⌛ Starts in 30 seconds!" do
+                    task.wait(0.5)
+                end
+
+                lastWave = ""
+
+                while autoInvasion do
+                    local waveAtual = WaveLabel.Text
+                    if waveAtual ~= lastWave then
+                        lastWave = waveAtual
+                        task.wait(0.1)
+                        local folder = workspace:FindFirstChild("InvasionNpc") and workspace.InvasionNpc:FindFirstChild("Bleach")
+                        if folder then
+                            for _, npc in ipairs(folder:GetChildren()) do
+                                if not autoInvasion then break end
+                                if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
+                                    local char = game.Players.LocalPlayer.Character
+                                    if char and char:FindFirstChild("HumanoidRootPart") then
+                                        char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                                    end
+                                    repeat
+                                        task.wait()
+                                    until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoInvasion
                                 end
-                                repeat
-                                    task.wait()
-                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoInvasion
                             end
                         end
                     end
+                    if waveAtual == ultimaWave then
+                        task.wait(4.4)
+                        break
+                    end
+                    task.wait(0.1)
                 end
-                task.wait(0.1)
             end
         end)
     end
 })
 
-local autoSummerTower = false
+local slayerT = false
 local lastRoom = ""
-Tabs.Trials:AddToggle("AutoSummerTower", {
-    Title = "Auto SummerTower",
+Tabs.Trials:AddToggle("SlayerTower", {
+    Title = "Auto SlayerTower",
     Default = false,
     Callback = function(state)
-        autoSummerTower = state
+        slayerT = state
         task.spawn(function()
-            while autoSummerTower do
+            while slayerT do
                 local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Visual")
                 local roomLabel = gui:WaitForChild("TowerFrame"):WaitForChild("Room")
-
                 local currentRoom = roomLabel.Text
                 if currentRoom ~= lastRoom then
                     lastRoom = currentRoom
                     task.wait(0.1)
-
-                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("Summer2025")
+                    local folder = workspace:FindFirstChild("TowerNpc") and workspace.TowerNpc:FindFirstChild("DemonSlayer")
                     if folder then
                         for _, npc in ipairs(folder:GetChildren()) do
-                            if not autoSummerTower then break end
+                            if not slayerT then break end
                             if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") then
                                 local char = game.Players.LocalPlayer.Character
                                 if char and char:FindFirstChild("HumanoidRootPart") then
@@ -397,7 +453,7 @@ Tabs.Trials:AddToggle("AutoSummerTower", {
                                 end
                                 repeat
                                     task.wait()
-                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not autoSummerTower
+                                until not npc:IsDescendantOf(game) or npc.Health.Value <= 0 or not slayerT
                             end
                         end
                     end
@@ -415,7 +471,6 @@ Tabs.Misc:AddButton({
     local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
     local vfx = assets and assets:FindFirstChild("Vfx")
     local drops = assets and assets:FindFirstChild("Drops")
-
     local targets = {
         vfx:FindFirstChild("DeathEffectModel") and vfx.DeathEffectModel:FindFirstChild("DeathEffect"),
         vfx:FindFirstChild("HitEffectModel") and vfx.HitEffectModel:FindFirstChild("HitEffect"),
@@ -448,6 +503,102 @@ Tabs.Misc:AddButton({
         Duration = 3
     })
 end
+})
+
+local upgradeOptions = {
+    "Strength",
+    "Gem",
+    "Luck",
+    "Drops",
+    "DropLuck"
+}
+getgenv().SelectedUpgrades = {}
+
+local MultiDropdown = Tabs.Up:AddDropdown("UpgradeMultiDropdown", {
+    Title = "Upgrades",
+    Description = "Select Upgrades",
+    Values = upgradeOptions,
+    Multi = true,
+    Default = {},
+})
+
+MultiDropdown:OnChanged(function(Value)
+    getgenv().SelectedUpgrades = {}
+    for nome, ativo in pairs(Value) do
+        if ativo then
+            table.insert(getgenv().SelectedUpgrades, nome)
+        end
+    end
+end)
+
+local autoUpgrade = false
+Tabs.Up:AddToggle("UpBleach", {
+    Title = "Auto Upgrade Bleach",
+    Default = false,
+    Callback = function(state)
+        autoUpgrade = state
+        task.spawn(function()
+            while autoUpgrade do
+                for _, upgradeName in ipairs(getgenv().SelectedUpgrades) do
+                    local args = {upgradeName, "Bleach"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Invasion"):WaitForChild("InvasionUpgrade"):FireServer(unpack(args))
+                    task.wait(0.5)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+local autoUpgrade = false
+Tabs.Up:AddToggle("UpJjk", {
+    Title = "Auto Upgrade Jjk",
+    Default = false,
+    Callback = function(state)
+        autoUpgrade = state
+        task.spawn(function()
+            while autoUpgrade do
+                for _, upgradeName in ipairs(getgenv().SelectedUpgrades) do
+                    local args = {upgradeName, "Jjk"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Invasion"):WaitForChild("InvasionUpgrade"):FireServer(unpack(args))
+                    task.wait(0.5)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+local vu = game:GetService("VirtualUser")
+local player = game.Players.LocalPlayer
+local afk = false
+Tabs.Settings:AddToggle("AntiAfk", {
+    Title = "Anti AFK",
+    Default = false,
+    Callback = function(Value)
+        afk = Value
+        if Value then
+            Fluent:Notify({
+                Title = "Anti AFK",
+                Content = " - On",
+                Duration = 4
+            })
+            task.spawn(function()
+                while Afk do
+                    wait(450)
+                    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    wait(1)
+                    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                end
+            end)
+        else
+            Fluent:Notify({
+                Title = "AntiAFK",
+                Content = " - Off",
+                Duration = 4
+            })
+        end
+    end
 })
 
 SaveManager:SetLibrary(Fluent)
