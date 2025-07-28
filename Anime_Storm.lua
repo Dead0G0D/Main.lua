@@ -6,7 +6,7 @@ local Window = Fluent:CreateWindow({
     Title = "Anime Storm Simulator",
     SubTitle = "In Latency",
     TabWidth = 160,
-    Size = UDim2.fromOffset(500, 350),
+    Size = UDim2.fromOffset(500, 360),
     Acrylic = false,
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
@@ -14,15 +14,15 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Farms", Icon = "sword" }),
+    Player = Window:AddTab({ Title = "PlayerTab", Icon = "list" }),
     Trials = Window:AddTab({ Title = "GameModes", Icon = "landmark" }),
     Up = Window:AddTab({ Title = "Upgrades", Icon = "power" }),
-    Misc = Window:AddTab({ Title = "Misc", Icon = "list" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 local Options = Fluent.Options
 
-Tabs.Main:AddSection("Toggles")
+Tabs.Main:AddSection("Toggles", "axe")
 local autoClick = false
 Tabs.Main:AddToggle("AutoClickDamage", {
     Title = "Auto Click + Damage",
@@ -184,7 +184,7 @@ local player = Players.LocalPlayer
 local totalRewards = 8
 local collected = {}
 
-Tabs.Misc:AddToggle("AutoCollectTimeRewards", {
+Tabs.Player:AddToggle("AutoCollectTimeRewards", {
     Title = "Auto Collect TimeRewards",
     Default = false,
     Callback = function(state)
@@ -206,7 +206,7 @@ Tabs.Misc:AddToggle("AutoCollectTimeRewards", {
     end
 })
 
-Tabs.Misc:AddToggle("AutoRejoinAfterRewards", {
+Tabs.Player:AddToggle("AutoRejoinAfterRewards", {
     Title = "Auto Rejoin",
     Default = false,
     Callback = function(state)
@@ -216,7 +216,7 @@ Tabs.Misc:AddToggle("AutoRejoinAfterRewards", {
                 while _G.AutoRejoin do
                     local lastRewardTime = TimedRewardsConfig["Reward" .. totalRewards].TimeRequired
                     if player.CurrentTotalPlaytime.Value >= lastRewardTime + 500 then
-                        TeleportService:Teleport(game.PlaceId, player)
+                        TeleportService:TeleportToPrivateServer(game.PlaceId, game.JobId, {player})
                         break
                     end
                     task.wait(25)
@@ -230,7 +230,7 @@ ReplicatedStorage.Remotes.TimedRewards.OnClientEvent:Connect(function(rewardName
     collected[rewardName] = true
 end)
 
-Tabs.Misc:AddToggle("AutoRankup", {
+Tabs.Player:AddToggle("AutoRankup", {
     Title = "Auto Rankup",
     Default = false,
     Callback = function(state)
@@ -243,7 +243,7 @@ Tabs.Misc:AddToggle("AutoRankup", {
     end
 })
 
-Tabs.Misc:AddToggle("AutoClaimPass", {
+Tabs.Player:AddToggle("AutoClaimPass", {
     Title = "Auto Claim Pass",
     Default = false,
     Callback = function(state)
@@ -254,6 +254,32 @@ Tabs.Misc:AddToggle("AutoClaimPass", {
                 task.wait(15)
             end
         end)
+    end
+})
+
+local codes = {
+    "Update5",
+    "AnimeStormSimulator",
+    "500KVisits",
+    "WowHunter",
+    "SorryForSeasonPassBug"
+}
+
+Tabs.Player:AddToggle("AutoRedeemCodes", {
+    Title = "Auto Redeem Codes",
+    Default = false,
+    Callback = function(state)
+        _G.AutoRedeemCodes = state
+        if state then
+            task.spawn(function()
+                for _, code in ipairs(codes) do
+                    if not _G.AutoRedeemCodes then break end
+                    local args = {code}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Code"):InvokeServer(unpack(args))
+                    task.wait(1)
+                end
+            end)
+        end
     end
 })
 
@@ -464,45 +490,36 @@ Tabs.Trials:AddToggle("SlayerTower", {
     end
 })
 
-Tabs.Misc:AddButton({
+Tabs.Player:AddButton({
     Title = "Fps Boost",
     Description = "Remove all VFX",
     Callback = function()
-    local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
-    local vfx = assets and assets:FindFirstChild("Vfx")
-    local drops = assets and assets:FindFirstChild("Drops")
-    local targets = {
-        vfx:FindFirstChild("DeathEffectModel") and vfx.DeathEffectModel:FindFirstChild("DeathEffect"),
-        vfx:FindFirstChild("HitEffectModel") and vfx.HitEffectModel:FindFirstChild("HitEffect"),
-        vfx:FindFirstChild("SpawnEffectModel") and vfx.SpawnEffectModel:FindFirstChild("SpawnEffect")
-    }
-
-    for _, effectPart in ipairs(targets) do
-        if effectPart then
-            for _, obj in ipairs(effectPart:GetDescendants()) do
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") then
-                    obj:Destroy()
+        local assets = game:GetService("ReplicatedStorage"):WaitForChild("Assets", 5)
+        local vfx, drops = assets and assets.Vfx, assets and assets.Drops
+        for _, model in ipairs{vfx and vfx.DeathEffectModel, vfx and vfx.HitEffectModel, vfx and vfx.SpawnEffectModel} do
+            local part = model and model:FindFirstChild(model.Name:gsub("Model", ""))
+            if part then
+                for _, obj in ipairs(part:GetDescendants()) do
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") then obj:Destroy() end
                 end
             end
         end
+        if drops then
+            for _, item in ipairs(drops:GetChildren()) do
+                if item:IsA("Folder") then
+                    for _, part in ipairs(item:GetDescendants()) do
+                        if part:IsA("BasePart") then for _, c in ipairs(part:GetChildren()) do c:Destroy() end end
+                    end
+                elseif item:IsA("BasePart") then
+                    for _, c in ipairs(item:GetChildren()) do c:Destroy() end
+                end
+            end
+        end
+        local gui = player and player:FindFirstChild("PlayerGui")
+        local dropsGui = gui and gui:FindFirstChild("Warning") and gui.Warning:FindFirstChild("ItemDrops")
+        if dropsGui then for _, c in ipairs(dropsGui:GetChildren()) do c:Destroy() end end
+        Fluent:Notify({ Title = "All Vfx Removed", Content = "Fps Boosted!", Duration = 3 })
     end
-
-    local gemPart = drops:FindFirstChild("GemPart")
-    if gemPart then
-        gemPart:ClearAllChildren()
-    end
-
-    local summerGemPart = drops:FindFirstChild("SummerGemPart")
-    if summerGemPart then
-        summerGemPart:ClearAllChildren()
-    end
-
-    Fluent:Notify({
-        Title = "All Vfx Removed",
-        Content = "Fps Boosted!",
-        Duration = 3
-    })
-end
 })
 
 local upgradeOptions = {
@@ -569,6 +586,7 @@ Tabs.Up:AddToggle("UpJjk", {
     end
 })
 
+Tabs.Settings:AddSection("Game", "settings")
 local vu = game:GetService("VirtualUser")
 local player = game.Players.LocalPlayer
 local afk = false
