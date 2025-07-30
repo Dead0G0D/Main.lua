@@ -100,7 +100,7 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
     end
 })
 
-Tabs.Main:AddSection("Worlds")
+Tabs.Main:AddSection("Worlds", "world")
 local function getWorlds()
     local result = {}
     for _, folder in ipairs(workspace.Npc:GetChildren()) do
@@ -217,9 +217,9 @@ local player = Players.LocalPlayer
 local totalRewards = 8
 local collected = {}
 
-Tabs.Player:AddSection("Collect", "star")
+Tabs.Player:AddSection("Claims", "star")
 Tabs.Player:AddToggle("AutoCollectTimeRewards", {
-    Title = "Auto Collect TimeRewards",
+    Title = "Auto Claim TimeRewards",
     Default = false,
     Callback = function(state)
         _G.AutoCollectRewards = state
@@ -280,7 +280,7 @@ Tabs.Player:AddToggle("AutoClaimPass", {
     end
 })
 
-Tabs.Main:AddSection("Player")
+Tabs.Player:AddSection("Player")
 Tabs.Player:AddToggle("AutoRankup", {
     Title = "Auto Rankup",
     Default = false,
@@ -357,6 +357,7 @@ local function safeText(getLabel)
     return (label and label.Text) or "Waiting for Time"
 end
 
+Tabs.Trials:AddSection("Trial", "landmark")
 local trialParagraph = Tabs.Trials:AddParagraph({
     Title = "⏳ Timers",
     Content = "Easy Trial: Waiting for Time\nMedium Trial: Waiting for Time\nDemon Tower: Waiting for Time\nSummer Tower: Waiting for Time"
@@ -422,6 +423,7 @@ local function isInTrial()
     local f = g and g:FindFirstChild("TimeTrialFrame")
     return f and f.Visible
 end
+print("isInTrial:", isInTrial())
 
 Tabs.Trials:AddToggle("trialtp", {
     Title = "Auto Join Trials",
@@ -537,20 +539,19 @@ Tabs.Trials:AddToggle("AutoFarmTrial", {
                 task.wait(0.25)
             end
             if savedPosition and not isInTrial() then
-                local char = game.Players.LocalPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    hrp.CFrame = CFrame.new(savedPosition)
+                local kct = game.Players.LocalPlayer.Character
+                local vlw = kct and kct:FindFirstChild("HumanoidRootPart")
+                if vlw then
+                    vlw.CFrame = CFrame.new(savedPosition)
                 end
             end
         end)
     end
 })
 
-local savedPosition = nil
-
+local svposi = nil
 local positionParagraph = Tabs.Trials:AddParagraph({
-    Title = "📍 Saved Position",
+    Title = "Saved Position",
     Content = "No position saved yet"
 })
 
@@ -561,10 +562,11 @@ Tabs.Trials:AddButton({
         local char = game.Players.LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            savedPosition = hrp.Position
+            svposi = hrp.Position
             positionParagraph:SetDesc(
-                string.format("X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z)
+                string.format("X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
             )
+            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
         else
             Fluent:Notify({
                 Title = "Notification",
@@ -603,6 +605,7 @@ for k, _ in pairs(bossRushData) do
     table.insert(bossRushKeys, k)
 end
 local selectedRush = bossRushKeys[1]
+Tabs.Trials:AddSection("Modes", "flame")
 Tabs.Trials:AddDropdown("SelectBossRush", {
     Title = "Select BossRush",
     Values = bossRushKeys,
