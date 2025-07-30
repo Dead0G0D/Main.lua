@@ -20,7 +20,7 @@ local Tabs = {
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
-Tabs.Main:AddSection("Toggles", "axe")
+Tabs.Main:AddSection("Toggles", "sword")
 local autoClick = false
 Tabs.Main:AddToggle("AutoClickDamage", {
     Title = "Auto Click + Damage",
@@ -72,14 +72,25 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                 for _, enemyName in ipairs(selectedEnemies) do
                     for _, npc in ipairs(getAllNPCsWithName(enemyName)) do
                         if not autoFarm then break end
-                        if npc:FindFirstChild("HumanoidRootPart") then
-                            local char = game.Players.LocalPlayer.Character
-                            if char and char:FindFirstChild("HumanoidRootPart") then
-                                char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 3))
+                        local leftLeg = npc:FindFirstChild("LeftLeg")
+                        local char = game.Players.LocalPlayer.Character
+                        local humanoidRoot = char and char:FindFirstChild("HumanoidRootPart")
+                        if leftLeg and humanoidRoot then
+                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
+                                humanoidRoot.AutoFarmWeld:Destroy()
                             end
+                            humanoidRoot.CFrame = leftLeg.CFrame
+                            local weld = Instance.new("WeldConstraint")
+                            weld.Name = "AutoFarmWeld"
+                            weld.Part0 = humanoidRoot
+                            weld.Part1 = leftLeg
+                            weld.Parent = humanoidRoot
                             repeat
                                 task.wait(0.1)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
+                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
+                                humanoidRoot.AutoFarmWeld:Destroy()
+                            end
                         end
                     end
                 end
@@ -206,6 +217,7 @@ local player = Players.LocalPlayer
 local totalRewards = 8
 local collected = {}
 
+Tabs.Player:AddSection("Collect", "star")
 Tabs.Player:AddToggle("AutoCollectTimeRewards", {
     Title = "Auto Collect TimeRewards",
     Default = false,
@@ -230,7 +242,7 @@ Tabs.Player:AddToggle("AutoCollectTimeRewards", {
 })
 
 Tabs.Player:AddToggle("AutoRejoinAfterRewards", {
-    Title = "Auto Rejoin",
+    Title = "Rejoin after all Rewards",
     Default = false,
     Callback = function(state)
         _G.AutoRejoin = state
@@ -254,19 +266,6 @@ ReplicatedStorage.Remotes.TimedRewards.OnClientEvent:Connect(function(rewardName
     collected[rewardName] = true
 end)
 
-Tabs.Player:AddToggle("AutoRankup", {
-    Title = "Auto Rankup",
-    Default = false,
-    Callback = function(state)
-        task.spawn(function()
-            while state do
-                game.ReplicatedStorage.Remotes.Rebirth:FireServer("Rebirth")
-                task.wait(10)
-            end
-        end)
-    end
-})
-
 Tabs.Player:AddToggle("AutoClaimPass", {
     Title = "Auto Claim Pass",
     Default = false,
@@ -276,6 +275,20 @@ Tabs.Player:AddToggle("AutoClaimPass", {
                 local args = { { Tier = "All" } }
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SeasonPass"):WaitForChild("Claim"):FireServer(unpack(args))
                 task.wait(15)
+            end
+        end)
+    end
+})
+
+Tabs.Main:AddSection("Player")
+Tabs.Player:AddToggle("AutoRankup", {
+    Title = "Auto Rankup",
+    Default = false,
+    Callback = function(state)
+        task.spawn(function()
+            while state do
+                game.ReplicatedStorage.Remotes.Rebirth:FireServer("Rebirth")
+                task.wait(10)
             end
         end)
     end
@@ -363,11 +376,32 @@ mediumTrial = watchLabel(mediumTrialPath, updateParagraph)
 demot = watchLabel(demotPath, updateParagraph)
 sumt = watchLabel(sumtPath, updateParagraph)
 
-local trialTypes = {"Easy", "Medium"}
+local cft = {
+    EasyTrial = CFrame.new(7784.22461, -26.3008652, 84.3378296, 0, 0, -1, 0, 1, 0, 1, 0, 0),
+    MediumTrial = CFrame.new(7202.21826, -18.2700043, 220.671005, 0.990270376, 0, 0.13915664, 0, 1, 0, -0.13915664, 0, 0.990270376)
+}
+
+local easyTrialPath = {"Maps","TimeTrialLobby","Doors","EasyTrialDoor","UiPart","Timer","TextLabel"}
+local mediumTrialPath = {"Maps","TimeTrialLobby","Doors","MediumTrialDoor","UiPart","Timer","TextLabel"}
+
+local easyTrial, mediumTrial
+
+local function safeText(getLabel)
+    local label = nil
+    local success, _ = pcall(function()
+        label = getLabel and getLabel()
+    end)
+    return (label and label.Text) or "Waiting for Time"
+end
+
+easyTrial = watchLabel(easyTrialPath)
+mediumTrial = watchLabel(mediumTrialPath)
+
+local trialTypes = {"EasyTrial", "MediumTrial"}
 local selectedTrials = {}
 
 Tabs.Trials:AddDropdown("TrialTypeMultiDropdown", {
-    Title = "Trials para Entrar",
+    Title = "Select Trials",
     Values = trialTypes,
     Multi = true,
     Default = {},
@@ -381,38 +415,38 @@ Tabs.Trials:AddDropdown("TrialTypeMultiDropdown", {
     end
 })
 
-local auto_trial = false
-Tabs.Trials:AddToggle("AutoTrialTeleport", {
-    Title = "Auto Entrar Trials",
+local jtrial = false
+
+local function isInTrial()
+    local g = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Visual")
+    local f = g and g:FindFirstChild("TimeTrialFrame")
+    return f and f.Visible
+end
+
+Tabs.Trials:AddToggle("trialtp", {
+    Title = "Auto Join Trials",
     Default = false,
     Callback = function(s)
-        auto_trial = s
+        jtrial = s
         task.spawn(function()
-            while auto_trial do
-                for _, selectedTrial in ipairs(selectedTrials) do
-                    local p = workspace:FindFirstChild("Portals")
-                    local ttl = p and p:FindFirstChild("TimeTrialLobby")
-                    local trial = ttl and ttl:FindFirstChild(selectedTrial .. "Trial")
-                    local timer = trial and trial:FindFirstChild("Timer")
-                    local label = timer and timer:FindFirstChild("TextLabel")
-                    local expectedText = selectedTrial == "Easy"
-                        and "Closes in: 1 minute at XX:16!"
-                        or "Closes in: 1 minute at XX:31!"
-                    if label and label:IsA("TextLabel") and label.Text == expectedText then
-                        local tp = trial:FindFirstChild("Teleporter")
-                        if tp and tp:IsA("Model") and tp:FindFirstChild("PrimaryPart") then
+            while jtrial do
+                if not isInTrial() then
+                    for _, selectedTrial in ipairs(selectedTrials) do
+                        if selectedTrial == "EasyTrial" and safeText(easyTrial) == "Closes in: 1 minute at XX:16!" then
                             local c = game.Players.LocalPlayer.Character
                             if c and c:FindFirstChild("HumanoidRootPart") then
-                                c:MoveTo(tp.PrimaryPart.Position)
-                                task.wait(0.3)
-                                local prox = trial:FindFirstChild("TeleporterProximity")
-                                if prox and prox:IsA("Part") then
-                                    local prompt = prox:FindFirstChildOfClass("ProximityPrompt")
-                                    if prompt and fireproximityprompt then
-                                        fireproximityprompt(prompt)
-                                        task.wait(1)
-                                    end
-                                end
+                                task.wait(1)
+                                c.HumanoidRootPart.CFrame = cft.EasyTrial
+                                task.wait(1)
+                                break
+                            end
+                        elseif selectedTrial == "MediumTrial" and safeText(mediumTrial) == "Closes in: 1 minute at XX:31!" then
+                            local c = game.Players.LocalPlayer.Character
+                            if c and c:FindFirstChild("HumanoidRootPart") then
+                                task.wait(1)
+                                c.HumanoidRootPart.CFrame = cft.MediumTrial
+                                task.wait(1)
+                                break
                             end
                         end
                     end
@@ -424,34 +458,121 @@ Tabs.Trials:AddToggle("AutoTrialTeleport", {
 })
 
 local auto_farm_trial = false
+local last_room = ""
+local trialNpcFolders = {
+    EasyTrial = "Easy",
+    MediumTrial = "Medium",
+}
+
+local function getCurrentRoom()
+    local g = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Visual")
+    local f = g and g:FindFirstChild("TimeTrialFrame")
+    local r = f and f:FindFirstChild("Room")
+    return r and r.Text or ""
+end
+
 Tabs.Trials:AddToggle("AutoFarmTrial", {
-    Title = "Auto Farm Trial Npcs",
+    Title = "Auto Trial Enemies",
     Default = false,
     Callback = function(s)
         auto_farm_trial = s
         task.spawn(function()
             while auto_farm_trial do
-                for _, selectedTrial in ipairs(selectedTrials) do
-                    local f = workspace:FindFirstChild("TrialRoomNpc")
-                    local folder = f and f:FindFirstChild(selectedTrial)
-                    if folder then
-                        for _, npc in ipairs(folder:GetChildren()) do
-                            if not auto_farm_trial then break end
-                            if npc:FindFirstChild("HumanoidRootPart") then
+                local current_room = getCurrentRoom()
+                if current_room ~= "" and current_room ~= last_room then
+                    last_room = current_room
+                    for _, selectedTrial in ipairs(selectedTrials) do
+                        local folderName = trialNpcFolders[selectedTrial]
+                        local f = workspace:FindFirstChild("TrialRoomNpc")
+                        local folder = f and f:FindFirstChild(folderName)
+                        if folder then
+                            for _, npc in ipairs(folder:GetChildren()) do
+                                if not auto_farm_trial then break end
+                                local npcRoot = npc:FindFirstChild("HumanoidRootPart")
                                 local char = game.Players.LocalPlayer.Character
-                                if char and char:FindFirstChild("HumanoidRootPart") then
-                                    char:MoveTo(npc.HumanoidRootPart.Position + Vector3.new(0, 0, 2))
+                                local humanoidRoot = char and char:FindFirstChild("HumanoidRootPart")
+                                if npcRoot and humanoidRoot then
+                                    if humanoidRoot:FindFirstChild("AutoFarmAlign") then
+                                        humanoidRoot.AutoFarmAlign:Destroy()
+                                    end
+                                    if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
+                                        humanoidRoot.AutoFarmAttachment:Destroy()
+                                    end
+                                    if npcRoot:FindFirstChild("AutoFarmAttachment") then
+                                        npcRoot.AutoFarmAttachment:Destroy()
+                                    end
+                                    humanoidRoot.CFrame = npcRoot.CFrame
+                                    local hrpAttachment = Instance.new("Attachment", humanoidRoot)
+                                    hrpAttachment.Name = "AutoFarmAttachment"
+                                    hrpAttachment.Position = Vector3.new(0, 0, 2)
+                                    local npcAttachment = Instance.new("Attachment", npcRoot)
+                                    npcAttachment.Name = "AutoFarmAttachment"
+                                    npcAttachment.Position = Vector3.new(0, 0, 0)
+                                    local align = Instance.new("AlignPosition")
+                                    align.Name = "AutoFarmAlign"
+                                    align.Attachment0 = hrpAttachment
+                                    align.Attachment1 = npcAttachment
+                                    align.Responsiveness = 200
+                                    align.MaxForce = 50000
+                                    align.Parent = humanoidRoot
+                                    repeat
+                                        task.wait(0.1)
+                                    until not auto_farm_trial or not npc:IsDescendantOf(game) or not npc:FindFirstChild("Health") or npc.Health.Value <= 0
+                                    if humanoidRoot:FindFirstChild("AutoFarmAlign") then
+                                        humanoidRoot.AutoFarmAlign:Destroy()
+                                    end
+                                    if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
+                                        humanoidRoot.AutoFarmAttachment:Destroy()
+                                    end
+                                    if npcRoot:FindFirstChild("AutoFarmAttachment") then
+                                        npcRoot.AutoFarmAttachment:Destroy()
+                                    end
                                 end
-                                repeat
-                                    task.wait(0.2)
-                                until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not auto_farm_trial
+                                if not auto_farm_trial then break end
                             end
                         end
+                        if not auto_farm_trial then break end
                     end
                 end
-                task.wait(1)
+                task.wait(0.25)
+            end
+            if savedPosition and not isInTrial() then
+                local char = game.Players.LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    hrp.CFrame = CFrame.new(savedPosition)
+                end
             end
         end)
+    end
+})
+
+local savedPosition = nil
+
+local positionParagraph = Tabs.Trials:AddParagraph({
+    Title = "📍 Saved Position",
+    Content = "No position saved yet"
+})
+
+Tabs.Trials:AddButton({
+    Title = "Save Position",
+    Description = "Saves your current position",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedPosition = hrp.Position
+            positionParagraph:SetDesc(
+                string.format("X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z)
+            )
+        else
+            Fluent:Notify({
+                Title = "Notification",
+                Content = "HumanoidRootPart not found",
+                SubContent = "Cannot save position",
+                Duration = 5
+            })
+        end
     end
 })
 
@@ -597,7 +718,7 @@ Tabs.Trials:AddToggle("AutoInvB", {
 
 local ai_j = false
 local uw_j = "Wave: 10/10"
-local cf_j = Vector3.new(6392.59277, 3088.83203, -6815.19287)
+local cf_j = Vector3.new(-3252.41895, 3200.5022, 1444.74194, -0.325602531, 0, -0.945506752, 0, 1, 0, 0.945506752, 0, -0.325602531)
 local lw_j = ""
 Tabs.Trials:AddToggle("AutoInvJjk", {
     Title = "Auto Invasion Jjk",
