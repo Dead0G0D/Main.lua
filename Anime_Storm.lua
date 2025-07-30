@@ -63,7 +63,7 @@ end
 
 local autoFarm = false
 Tabs.Main:AddToggle("AutoFarmEnemies", {
-    Title = "Auto Enemies",
+    Title = "Auto World Enemies",
     Default = false,
     Callback = function(state)
         autoFarm = state
@@ -72,44 +72,24 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                 for _, enemyName in ipairs(selectedEnemies) do
                     for _, npc in ipairs(getAllNPCsWithName(enemyName)) do
                         if not autoFarm then break end
-                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+                        local leftLeg = npc:FindFirstChild("LeftLeg")
                         local char = game.Players.LocalPlayer.Character
                         local humanoidRoot = char and char:FindFirstChild("HumanoidRootPart")
-                        if npcRoot and humanoidRoot then
-                            if humanoidRoot:FindFirstChild("AutoFarmAlign") then
-                                humanoidRoot.AutoFarmAlign:Destroy()
+                        if leftLeg and humanoidRoot then
+                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
+                                humanoidRoot.AutoFarmWeld:Destroy()
                             end
-                            if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
-                                humanoidRoot.AutoFarmAttachment:Destroy()
-                            end
-                            if npcRoot:FindFirstChild("AutoFarmAttachment") then
-                                npcRoot.AutoFarmAttachment:Destroy()
-                            end
-                            humanoidRoot.CFrame = npcRoot.CFrame
-                            local hrpAttachment = Instance.new("Attachment", humanoidRoot)
-                            hrpAttachment.Name = "AutoFarmAttachment"
-                            hrpAttachment.Position = Vector3.new(0, 0, -2)
-                            local npcAttachment = Instance.new("Attachment", npcRoot)
-                            npcAttachment.Name = "AutoFarmAttachment"
-                            npcAttachment.Position = Vector3.new(0, 0, 0)
-                            local align = Instance.new("AlignPosition")
-                            align.Name = "AutoFarmAlign"
-                            align.Attachment0 = hrpAttachment
-                            align.Attachment1 = npcAttachment
-                            align.Responsiveness = 200
-                            align.MaxForce = 50000
-                            align.Parent = humanoidRoot
+                            humanoidRoot.CFrame = leftLeg.CFrame
+                            local weld = Instance.new("WeldConstraint")
+                            weld.Name = "AutoFarmWeld"
+                            weld.Part0 = humanoidRoot
+                            weld.Part1 = leftLeg
+                            weld.Parent = humanoidRoot
                             repeat
                                 task.wait(0.1)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
-                            if humanoidRoot:FindFirstChild("AutoFarmAlign") then
-                                humanoidRoot.AutoFarmAlign:Destroy()
-                            end
-                            if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
-                                humanoidRoot.AutoFarmAttachment:Destroy()
-                            end
-                            if npcRoot:FindFirstChild("AutoFarmAttachment") then
-                                npcRoot.AutoFarmAttachment:Destroy()
+                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
+                                humanoidRoot.AutoFarmWeld:Destroy()
                             end
                         end
                     end
@@ -485,14 +465,13 @@ local trialNpcFolders = {
     EasyTrial = "Easy",
     MediumTrial = "Medium",
 }
-
 local function getCurrentRoom()
     local g = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Visual")
     local f = g and g:FindFirstChild("TimeTrialFrame")
     local r = f and f:FindFirstChild("Room")
     return r and r.Text or ""
 end
-
+local lastTrialState = nil
 Tabs.Trials:AddToggle("AutoFarmTrial", {
     Title = "Auto Trial Enemies",
     Default = false,
@@ -556,20 +535,25 @@ Tabs.Trials:AddToggle("AutoFarmTrial", {
                         if not auto_farm_trial then break end
                     end
                 end
+                local inTrialNow = isInTrial()
+                if lastTrialState == true and inTrialNow == false then
+                    if svposi then
+                        local char = game.Players.LocalPlayer.Character
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.CFrame = CFrame.new(svposi)
+                        end
+                    end
+                end
+                lastTrialState = inTrialNow
                 task.wait(0.25)
             end
-            if savedPosition and not isInTrial() then
-                local char = game.Players.LocalPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    hrp.CFrame = CFrame.new(savedPosition)
-                end
-            end
+            lastTrialState = nil
         end)
     end
 })
 
-local savedPosition = nil
+local svposi = nil
 local positionParagraph = Tabs.Trials:AddParagraph({
     Title = "Saved Position",
     Content = "No position saved yet"
@@ -582,11 +566,11 @@ Tabs.Trials:AddButton({
         local char = game.Players.LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            savedPosition = hrp.Position
+            svposi = hrp.Position
             positionParagraph:SetDesc(
-                string.format("X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z)
+                string.format("X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
             )
-            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z))
+            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z))
         else
             Fluent:Notify({
                 Title = "Notification",
