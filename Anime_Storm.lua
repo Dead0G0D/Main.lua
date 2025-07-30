@@ -63,7 +63,7 @@ end
 
 local autoFarm = false
 Tabs.Main:AddToggle("AutoFarmEnemies", {
-    Title = "Auto World Enemies",
+    Title = "Auto Enemies",
     Default = false,
     Callback = function(state)
         autoFarm = state
@@ -72,24 +72,44 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                 for _, enemyName in ipairs(selectedEnemies) do
                     for _, npc in ipairs(getAllNPCsWithName(enemyName)) do
                         if not autoFarm then break end
-                        local leftLeg = npc:FindFirstChild("LeftLeg")
+                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
                         local char = game.Players.LocalPlayer.Character
                         local humanoidRoot = char and char:FindFirstChild("HumanoidRootPart")
-                        if leftLeg and humanoidRoot then
-                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
-                                humanoidRoot.AutoFarmWeld:Destroy()
+                        if npcRoot and humanoidRoot then
+                            if humanoidRoot:FindFirstChild("AutoFarmAlign") then
+                                humanoidRoot.AutoFarmAlign:Destroy()
                             end
-                            humanoidRoot.CFrame = leftLeg.CFrame
-                            local weld = Instance.new("WeldConstraint")
-                            weld.Name = "AutoFarmWeld"
-                            weld.Part0 = humanoidRoot
-                            weld.Part1 = leftLeg
-                            weld.Parent = humanoidRoot
+                            if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
+                                humanoidRoot.AutoFarmAttachment:Destroy()
+                            end
+                            if npcRoot:FindFirstChild("AutoFarmAttachment") then
+                                npcRoot.AutoFarmAttachment:Destroy()
+                            end
+                            humanoidRoot.CFrame = npcRoot.CFrame
+                            local hrpAttachment = Instance.new("Attachment", humanoidRoot)
+                            hrpAttachment.Name = "AutoFarmAttachment"
+                            hrpAttachment.Position = Vector3.new(0, 0, -2)
+                            local npcAttachment = Instance.new("Attachment", npcRoot)
+                            npcAttachment.Name = "AutoFarmAttachment"
+                            npcAttachment.Position = Vector3.new(0, 0, 0)
+                            local align = Instance.new("AlignPosition")
+                            align.Name = "AutoFarmAlign"
+                            align.Attachment0 = hrpAttachment
+                            align.Attachment1 = npcAttachment
+                            align.Responsiveness = 200
+                            align.MaxForce = 50000
+                            align.Parent = humanoidRoot
                             repeat
                                 task.wait(0.1)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
-                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
-                                humanoidRoot.AutoFarmWeld:Destroy()
+                            if humanoidRoot:FindFirstChild("AutoFarmAlign") then
+                                humanoidRoot.AutoFarmAlign:Destroy()
+                            end
+                            if humanoidRoot:FindFirstChild("AutoFarmAttachment") then
+                                humanoidRoot.AutoFarmAttachment:Destroy()
+                            end
+                            if npcRoot:FindFirstChild("AutoFarmAttachment") then
+                                npcRoot.AutoFarmAttachment:Destroy()
                             end
                         end
                     end
@@ -539,17 +559,17 @@ Tabs.Trials:AddToggle("AutoFarmTrial", {
                 task.wait(0.25)
             end
             if savedPosition and not isInTrial() then
-                local kct = game.Players.LocalPlayer.Character
-                local vlw = kct and kct:FindFirstChild("HumanoidRootPart")
-                if vlw then
-                    vlw.CFrame = CFrame.new(savedPosition)
+                local char = game.Players.LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    hrp.CFrame = CFrame.new(savedPosition)
                 end
             end
         end)
     end
 })
 
-local svposi = nil
+local savedPosition = nil
 local positionParagraph = Tabs.Trials:AddParagraph({
     Title = "Saved Position",
     Content = "No position saved yet"
@@ -562,11 +582,11 @@ Tabs.Trials:AddButton({
         local char = game.Players.LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            svposi = hrp.Position
+            savedPosition = hrp.Position
             positionParagraph:SetDesc(
-                string.format("X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
+                string.format("X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z)
             )
-            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
+            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", savedPosition.X, savedPosition.Y, savedPosition.Z))
         else
             Fluent:Notify({
                 Title = "Notification",
