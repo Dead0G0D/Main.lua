@@ -38,7 +38,8 @@ Tabs.Main:AddToggle("AutoClickDamage", {
     end
 })
 
-local selectedEnemies = {}
+local selectedEnemies, autoFarm = {}, false
+
 local function getAllNPCsWithName(name)
     local all = {}
     for _, folder in ipairs(workspace.Npc:GetChildren()) do
@@ -61,7 +62,6 @@ local function getAllNPCsWithName(name)
     return all
 end
 
-local autoFarm = false
 Tabs.Main:AddToggle("AutoFarmEnemies", {
     Title = "Auto World Enemies",
     Default = false,
@@ -69,28 +69,48 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
         autoFarm = state
         task.spawn(function()
             while autoFarm do
-                for _, enemyName in ipairs(selectedEnemies) do
+                if jtrial then
+                    for _, trialName in ipairs(selectedTrials) do
+                        local t = ""
+                        if trialName == "EasyTrial" and easyTrial and easyTrial() then
+                            t = safeText(easyTrial)
+                        elseif trialName == "MediumTrial" and mediumTrial and mediumTrial() then
+                            t = safeText(mediumTrial)
+                        end
+                        if t == "Opens in: 1 minute(s)" then
+                            autoFarm = false
+                            task.defer(function()
+                                Tabs.Main:GetToggle("AutoFarmEnemies"):SetState(false)
+                            end)
+                            Fluent:Notify({
+                                Title = "AutoFarm Parado",
+                                Content = "Trial começando em 1 minuto!",
+                                Duration = 6
+                            })
+                            while isInTrial() do
+                                task.wait(1)
+                            end
+                            task.wait(2)
+                            autoFarm = true
+                            task.defer(function()
+                                Tabs.Main:GetToggle("AutoFarmEnemies"):SetState(true)
+                            end)
+                            break
+                        end
+                    end
+                end
+                local selEnemies = getgenv().selectedEnemies or {}
+                for _, enemyName in ipairs(selEnemies) do
                     for _, npc in ipairs(getAllNPCsWithName(enemyName)) do
                         if not autoFarm then break end
-                        local leftLeg = npc:FindFirstChild("LeftLeg")
+                        local npcRoot = npc:FindFirstChild("HumanoidRootPart")
                         local char = game.Players.LocalPlayer.Character
-                        local humanoidRoot = char and char:FindFirstChild("HumanoidRootPart")
-                        if leftLeg and humanoidRoot then
-                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
-                                humanoidRoot.AutoFarmWeld:Destroy()
-                            end
-                            humanoidRoot.CFrame = leftLeg.CFrame
-                            local weld = Instance.new("WeldConstraint")
-                            weld.Name = "AutoFarmWeld"
-                            weld.Part0 = humanoidRoot
-                            weld.Part1 = leftLeg
-                            weld.Parent = humanoidRoot
-                            repeat
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if npcRoot and hrp then
+                            hrp.CFrame = CFrame.lookAt(npcRoot.Position + Vector3.new(0, 0, 2), npcRoot.Position)
+                            repeat 
                                 task.wait(0.1)
                             until not npc:IsDescendantOf(game) or (npc:FindFirstChild("Health") and npc.Health.Value <= 0) or not autoFarm
-                            if humanoidRoot:FindFirstChild("AutoFarmWeld") then
-                                humanoidRoot.AutoFarmWeld:Destroy()
-                            end
                         end
                     end
                 end
@@ -100,26 +120,67 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
     end
 })
 
-Tabs.Main:AddSection("Worlds", "world")
-local function getWorlds()
-    local result = {}
-    for _, folder in ipairs(workspace.Npc:GetChildren()) do
-        if folder:IsA("Folder") then
-            table.insert(result, folder.Name)
-        end
+local farmInAttackRange = false
+Tabs.Main:AddToggle("FarmInAttackRange", {
+    Title = "Farm in Attack Range",
+    Default = false,
+    Callback = function(state)
+        farmInAttackRange = state
+        task.spawn(function()
+            while farmInAttackRange do
+                local char = game.Players.LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local targets = {}
+                    for _, folder in ipairs(workspace.Npc:GetChildren()) do
+                        if folder:IsA("Folder") then
+                            for _, npc in ipairs(folder:GetChildren()) do
+                                local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+                                if npcRoot and (npcRoot.Position - hrp.Position).Magnitude < 250 then
+                                    local world = npc:GetAttribute("World") or folder.Name
+                                    local target = workspace.Npc:FindFirstChild(world) and workspace.Npc[world]:FindFirstChild(npc.Name)
+                                    if target then
+                                        table.insert(targets, target)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if #targets > 0 then
+                        game.ReplicatedStorage.Remotes.Input:FireServer("GainStrength", targets)
+                    end
+                end
+                task.wait()
+            end
+        end)
     end
-    return result
-end
+})
 
-local worlds = getWorlds()
+local worlds = (function()
+    local r = {}
+    for _, folder in ipairs(workspace.Npc:GetChildren()) do
+        if folder:IsA("Folder") then table.insert(r, folder.Name) end
+    end
+    return r
+end)()
 local selectedWorld = worlds[1] or "nothing"
 
-local function getNpcListFromWorld()
+local function getNpcListWithWorldAttribute()
     local names, added = {}, {}
-    local folder = workspace.Npc:FindFirstChild(selectedWorld)
-    if folder then
-        for _, npc in ipairs(folder:GetChildren()) do
-            if npc:IsA("Model") and not added[npc.Name] then
+    for _, folder in ipairs(workspace.Npc:GetChildren()) do
+        if folder:IsA("Folder") then
+            for _, npc in ipairs(folder:GetChildren()) do
+                if npc:IsA("Model") and npc:GetAttribute("World") == selectedWorld and not added[npc.Name] then
+                    table.insert(names, npc.Name)
+                    added[npc.Name] = true
+                end
+            end
+        end
+    end
+    local hidden = game:GetService("ReplicatedStorage"):FindFirstChild("HiddenNpcs")
+    if hidden then
+        for _, npc in ipairs(hidden:GetChildren()) do
+            if npc:IsA("Model") and npc:GetAttribute("World") == selectedWorld and not added[npc.Name] then
                 table.insert(names, npc.Name)
                 added[npc.Name] = true
             end
@@ -129,6 +190,7 @@ local function getNpcListFromWorld()
 end
 
 local enemyMultiDropdown
+Tabs.Main:AddSection("World", "map")
 Tabs.Main:AddDropdown("SelectWorld", {
     Title = "Select World",
     Values = worlds,
@@ -136,23 +198,23 @@ Tabs.Main:AddDropdown("SelectWorld", {
     Default = selectedWorld,
     Callback = function(value)
         selectedWorld = value
+        getgenv().selectedEnemies = {}
         if enemyMultiDropdown then
-            enemyMultiDropdown:SetValues(getNpcListFromWorld())
+            enemyMultiDropdown:SetValue({})
+            enemyMultiDropdown:SetValues(getNpcListWithWorldAttribute())
         end
     end
 })
 
 enemyMultiDropdown = Tabs.Main:AddDropdown("EnemyMultiDropdown", {
     Title = "Enemies",
-    Values = getNpcListFromWorld(),
+    Values = getNpcListWithWorldAttribute(),
     Multi = true,
     Default = {},
     Callback = function(value)
-        selectedEnemies = {}
+        getgenv().selectedEnemies = {}
         for enemyName, active in pairs(value) do
-            if active then
-                table.insert(selectedEnemies, enemyName)
-            end
+            if active then table.insert(getgenv().selectedEnemies, enemyName) end
         end
     end
 })
@@ -161,9 +223,7 @@ Tabs.Main:AddButton({
     Title = "Refresh Enemies",
     Description = "Refresh",
     Callback = function()
-        if enemyMultiDropdown then
-            enemyMultiDropdown:SetValues(getNpcListFromWorld())
-        end
+        if enemyMultiDropdown then enemyMultiDropdown:SetValues(getNpcListWithWorldAttribute()) end
     end
 })
 
@@ -280,7 +340,7 @@ Tabs.Player:AddToggle("AutoClaimPass", {
     end
 })
 
-Tabs.Player:AddSection("Player")
+Tabs.Player:AddSection("Player", "settings")
 Tabs.Player:AddToggle("AutoRankup", {
     Title = "Auto Rankup",
     Default = false,
@@ -553,6 +613,44 @@ Tabs.Trials:AddToggle("AutoFarmTrial", {
     end
 })
 
+local teleport_on_exit_trial = false
+Tabs.Trials:AddToggle("TeleportToSavedPosition", {
+    Title = "Teleport to Saved Position",
+    Default = false,
+    Callback = function(state)
+        teleport_on_exit_trial = state
+        print("TeleportToSavedPosition toggle:", state)
+        task.spawn(function()
+            local lastTrialState = nil
+            while teleport_on_exit_trial do
+                if auto_farm_trial then
+                    local inTrialNow = isInTrial()
+                    if lastTrialState == true and inTrialNow == false then
+                        print("Detected trial end. Teleporting...")
+                        if svposi then
+                            local char = game.Players.LocalPlayer.Character
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            print("Teleport info:", svposi, hrp)
+                            if hrp then
+                                hrp.CFrame = CFrame.new(svposi)
+                                print("Teleported to:", svposi)
+                            else
+                                print("HumanoidRootPart not found at teleport time.")
+                            end
+                        else
+                            print("svposi nil, not teleporting.")
+                        end
+                    end
+                    lastTrialState = inTrialNow
+                else
+                    lastTrialState = nil
+                end
+                task.wait(0.25)
+            end
+        end)
+    end
+})
+
 local svposi = nil
 local positionParagraph = Tabs.Trials:AddParagraph({
     Title = "Saved Position",
@@ -565,19 +663,21 @@ Tabs.Trials:AddButton({
     Callback = function()
         local char = game.Players.LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        print("Save Position Button Pressed")
         if hrp then
             svposi = hrp.Position
             positionParagraph:SetDesc(
                 string.format("X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z)
             )
-            print(string.format("Posição salva: X: %.2f, Y: %.2f, Z: %.2f", svposi.X, svposi.Y, svposi.Z))
+            print("Position saved:", svposi)
         else
             Fluent:Notify({
                 Title = "Notification",
-                Content = "HumanoidRootPart not found",
+                Content = "Player not found?",
                 SubContent = "Cannot save position",
                 Duration = 5
             })
+            print("Failed to save position. HumanoidRootPart not found.")
         end
     end
 })
