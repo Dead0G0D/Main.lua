@@ -15,7 +15,7 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     Main = Window:AddTab({ Title = "Farms", Icon = "sword" }),
     Player = Window:AddTab({ Title = "Player", Icon = "list" }),
-    Trials = Window:AddTab({ Title = "GameModes", Icon = "landmark" }),
+    Trials = Window:AddTab({ Title = "GameModes", Icon = "castle" }),
     Up = Window:AddTab({ Title = "Upgrades", Icon = "power" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -23,7 +23,7 @@ local Tabs = {
 Tabs.Main:AddSection("Toggles", "sword")
 local autoClick = false
 Tabs.Main:AddToggle("AutoClickDamage", {
-    Title = "Auto Click + Damage",
+    Title = "Auto Click",
     Default = false,
     Callback = function(state)
         autoClick = state
@@ -115,42 +115,6 @@ Tabs.Main:AddToggle("AutoFarmEnemies", {
                     end
                 end
                 task.wait(0.5)
-            end
-        end)
-    end
-})
-
-local farmInAttackRange = false
-Tabs.Main:AddToggle("FarmInAttackRange", {
-    Title = "Farm in Attack Range",
-    Default = false,
-    Callback = function(state)
-        farmInAttackRange = state
-        task.spawn(function()
-            while farmInAttackRange do
-                local char = game.Players.LocalPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local targets = {}
-                    for _, folder in ipairs(workspace.Npc:GetChildren()) do
-                        if folder:IsA("Folder") then
-                            for _, npc in ipairs(folder:GetChildren()) do
-                                local npcRoot = npc:FindFirstChild("HumanoidRootPart")
-                                if npcRoot and (npcRoot.Position - hrp.Position).Magnitude < 250 then
-                                    local world = npc:GetAttribute("World") or folder.Name
-                                    local target = workspace.Npc:FindFirstChild(world) and workspace.Npc[world]:FindFirstChild(npc.Name)
-                                    if target then
-                                        table.insert(targets, target)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    if #targets > 0 then
-                        game.ReplicatedStorage.Remotes.Input:FireServer("GainStrength", targets)
-                    end
-                end
-                task.wait()
             end
         end)
     end
@@ -340,7 +304,7 @@ Tabs.Player:AddToggle("AutoClaimPass", {
     end
 })
 
-Tabs.Player:AddSection("Player", "settings")
+Tabs.Player:AddSection("Player", "shield")
 Tabs.Player:AddToggle("AutoRankup", {
     Title = "Auto Rankup",
     Default = false,
