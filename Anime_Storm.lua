@@ -1073,6 +1073,14 @@ local currentTraitParagraph = Tabs.Traits:AddParagraph({
     Content = getCurrentTraitName()
 })
 
+Tabs.Traits:AddButton({
+    Title = "Refresh Trait Display",
+    Description = "See above",
+    Callback = function()
+        currentTraitParagraph:SetDesc(getCurrentTraitName())
+    end
+})
+
 local traitFrame = game:GetService("Players").LocalPlayer.PlayerGui.Frames.TraitReroll.ContentFrame.CurrentTraitFrame
 if traitFrame and traitFrame:FindFirstChild("TraitName") then
     traitFrame.TraitName:GetPropertyChangedSignal("Text"):Connect(function()
@@ -1083,26 +1091,30 @@ end
 local petIds, petNames = {}, {}
 local petsFolder = game:GetService("Players").LocalPlayer.PlayerGui.Frames.Champions.ContentFrame.Scroll.ScrollingFrame
 
-local nameCount = {}
-
-for _,v in ipairs(petsFolder:GetChildren()) do
-    local pf = v:FindFirstChild("PetFrame")
-    local pn = pf and pf:FindFirstChild("PetName")
-    if pn and pn.Text ~= "" then
-        local baseName = pn.Text
-        nameCount[baseName] = (nameCount[baseName] or 0) + 1
-        local displayName = baseName
-        if nameCount[baseName] > 1 then
-            displayName = baseName .. " " .. tostring(nameCount[baseName])
+local function rebuildPetLists()
+    petIds, petNames = {}, {}
+    local nameCount = {}
+    for _,v in ipairs(petsFolder:GetChildren()) do
+        local pf = v:FindFirstChild("PetFrame")
+        local pn = pf and pf:FindFirstChild("PetName")
+        if pn and pn.Text ~= "" then
+            local baseName = pn.Text
+            nameCount[baseName] = (nameCount[baseName] or 0) + 1
+            local displayName = baseName
+            if nameCount[baseName] > 1 then
+                displayName = baseName .. " " .. tostring(nameCount[baseName])
+            end
+            table.insert(petIds, v.Name)
+            table.insert(petNames, displayName)
         end
-        table.insert(petIds, v.Name)
-        table.insert(petNames, displayName)
     end
 end
 
+rebuildPetLists()
+
 local selectedPetId = petIds[1]
 
-Tabs.Traits:AddDropdown("PetSelect", {
+local petDropdown = Tabs.Traits:AddDropdown("PetSelect", {
     Title = "Select Pet",
     Values = petNames,
     Default = petNames[1] or "",
@@ -1116,18 +1128,48 @@ Tabs.Traits:AddDropdown("PetSelect", {
     end
 })
 
-local traitNames = {}
+Tabs.Traits:AddButton({
+    Title = "Refresh Pets",
+    Description = "See Above",
+    Callback = function()
+        rebuildPetLists()
+        petDropdown:SetValues(petNames)
+        -- petDropdown:SetValue(petNames[1] or "")
+    end
+})
+
+local rarityOrder = {
+    ["Secret"] = 1,
+    ["Mythic"] = 2,
+    ["Legendary"] = 3,
+    ["Epic"] = 4,
+    ["Rare"] = 5
+}
+
+local traitData = {}
 local indexFrame = game:GetService("Players").LocalPlayer.PlayerGui.Frames.TraitReroll.IndexFrame
+
 for _, img in ipairs(indexFrame:GetChildren()) do
     if img:IsA("ImageLabel") then
         local holder = img:FindFirstChild("Holder")
-        if holder then
-            local traitNameLabel = holder:FindFirstChild("TraitName")
-            if traitNameLabel and traitNameLabel.Text ~= "" then
-                table.insert(traitNames, traitNameLabel.Text)
-            end
+        local traitNameLabel = holder and holder:FindFirstChild("TraitName")
+        local uiGradient = img:FindFirstChildOfClass("UIGradient")
+        if traitNameLabel and traitNameLabel.Text ~= "" and uiGradient and rarityOrder[uiGradient.Name] then
+            table.insert(traitData, {
+                name = traitNameLabel.Text,
+                rarity = uiGradient.Name
+            })
         end
     end
+end
+
+table.sort(traitData, function(a, b)
+    return rarityOrder[a.rarity] < rarityOrder[b.rarity]
+end)
+
+local traitNames = {}
+for _, data in ipairs(traitData) do
+    table.insert(traitNames, data.name)
 end
 
 traitState.selectedTraits = {}
