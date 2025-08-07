@@ -5,8 +5,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local Window = Fluent:CreateWindow({
     Title = "Anime Arise Simulator",
     SubTitle = "by Latency",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(500, 350),
+    TabWidth = 165,
+    Size = UDim2.fromOffset(500, 380),
     Acrylic = false,
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
@@ -170,6 +170,62 @@ task.spawn(function()
         end
     end
 end)
+
+local selectedEgg = ""
+
+local function getEggNames()
+    local eggsFolder = workspace:FindFirstChild("_Eggs")
+    if not eggsFolder then return {} end
+
+    local eggNames = {}
+    for _, egg in ipairs(eggsFolder:GetChildren()) do
+        table.insert(eggNames, egg.Name)
+    end
+    table.sort(eggNames)
+    return eggNames
+end
+
+local eggDropdown = Tabs.Main:AddDropdown("Egg", {
+    Title = "Select Egg",
+    Values = getEggNames(),
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedEgg = value
+    end
+})
+
+local eggsFolder = workspace:FindFirstChild("_Eggs")
+if eggsFolder then
+    eggsFolder.ChildAdded:Connect(function()
+        eggDropdown:SetValues(getEggNames())
+    end)
+    eggsFolder.ChildRemoved:Connect(function()
+        eggDropdown:SetValues(getEggNames())
+    end)
+end
+
+local egg = false
+Tabs.Main:AddToggle("Hatch", {
+    Title = "Auto Hatch",
+    Default = false,
+    Callback = function(state)
+        egg = state
+        task.spawn(function()
+            while egg do
+                local args = {
+	key,
+	"System",
+	"Eggs",
+	"Open",
+	selectedEgg,
+}
+				RemoteFireCode:FireServer(unpack(args))
+                task.wait(0.1)
+            end
+        end)
+    end
+})
 
 local function watchTrialEasyTexts(onUpdate)
     local watchedLabels = {}
@@ -363,14 +419,26 @@ Tabs.Trials:AddToggle("Auto Leave Per Wave", {
     end
 })
 
-local AutoFarmRaid = false
-Tabs.Trials:AddToggle("fraid", {
+local shouldReactivateFarm = false
+
+local fraid = Tabs.Trials:AddToggle("fraid", {
     Title = "Auto Enemies Raid",
     Default = false,
     Callback = function(state)
         AutoFarmRaid = state
     end
 })
+
+task.spawn(function()
+    while true do
+        if shouldReactivateFarm then
+            shouldReactivateFarm = false
+            task.wait(2.5)
+            fraid:SetValue(true)
+        end
+        task.wait(0)
+    end
+end)
 
 task.spawn(function()
     while true do
@@ -447,307 +515,117 @@ game:GetService("RunService").RenderStepped:Connect(function()
             elseif autoLeavePerWave then
                 local currentWave = GetCurrentWave(raidName)
                 if currentWave and currentWave >= targetWave then
-                    local raidID = RaidIDs[raidName]
-                    if raidID then
+                    task.spawn(function()
+                        task.wait()
                         local args = {
                             key,
                             "System",
                             "Islands",
                             "Teleport",
-                            raidID
+                            0
                         }
                         RemoteFireCode:FireServer(unpack(args))
-                    end
+                        fraid:SetValue(false)
+                        shouldReactivateFarm = true
+                    end)
                 end
             end
         end
     end
 end)
 
-local autoRankActive = false
-Tabs.Upgrade:AddToggle("Auto Rank Up", {
-    Title = "Auto Rank",
+local gachaTypes = {
+    "Hakis",
+    "Races",
+    "Range",
+    "GoldExperience",
+    "Sins",
+    "Families",
+    "Nem",
+    "Martialarts",
+    "Kaisen"
+}
+
+local selectedGachas = {}
+local autoGachaEnabled = false
+
+local Mtg = Tabs.Upgrade:AddDropdown("Mtg", {
+    Title = "Gachas",
+    Description = "Select the Gacha to roll.",
+    Values = gachaTypes,
+    Multi = true,
+    Default = {},
+})
+
+Mtg:OnChanged(function(Value)
+    selectedGachas = {}
+    for k, v in pairs(Value) do
+        if v then
+            table.insert(selectedGachas, k)
+        end
+    end
+end)
+
+Tabs.Upgrade:AddToggle("AutoGachaToggle", {
+    Title = "Auto Selected Gacha",
     Default = false,
     Callback = function(state)
-        autoRankActive = state
-        task.spawn(function()
-            while autoRankActive do
-local args = {
-	key,
-	"System",
-	"Ranks",
-	"Up"
-}
-                RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.5)
-            end
-        end)
+        autoGachaEnabled = state
+        if state then
+            task.spawn(function()
+                while autoGachaEnabled do
+                    for _, gacha in ipairs(selectedGachas) do
+                        local args = {
+                            key,
+                            "System",
+                            "VaultGacha",
+                            "Roll",
+                            gacha
+                        }
+                        RemoteFireCode:FireServer(unpack(args))
+                        task.wait()
+                    end
+                end
+            end)
+        end
     end
 })
 
-local up1 = false
-Tabs.Upgrade:AddToggle("p1", {
-    Title = "Auto Haki Gacha",
+local player = game.Players.LocalPlayer
+local Nf = player.PlayerGui:FindFirstChild("Notification") and player.PlayerGui.Notification:FindFirstChild("Messages")
+
+Tabs.Settings:AddSection("Player", "settings")
+Tabs.Settings:AddToggle("ToggleNotification", {
+    Title = "Notifications",
+    Description = "Toggle Notifications visibility",
     Default = false,
-    Callback = function(state)
-        up1 = state
-        task.spawn(function()
-            while up1 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Hakis"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
+    Callback = function(v)
+        if Nf then
+            Nf.Visible = v
+        end
     end
 })
 
-local up2 = false
-Tabs.Upgrade:AddToggle("p2", {
-    Title = "Auto Race Gacha",
-    Default = false,
-    Callback = function(state)
-        up2 = state
-        task.spawn(function()
-            while up2 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Races"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
+local gg = player.PlayerGui:FindFirstChild("Animation") and player.PlayerGui.Animation:FindFirstChild("Eggs") and player.PlayerGui.Animation.Eggs.Configuration:FindFirstChild("Template")
 
-local up3 = false
-Tabs.Upgrade:AddToggle("p3", {
-    Title = "Auto Range Gacha",
-    Default = false,
-    Callback = function(state)
-        up3 = state
-        task.spawn(function()
-            while up3 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Range"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up4 = false
-Tabs.Upgrade:AddToggle("p4", {
-    Title = "Auto GoldExperience Gacha",
-    Default = false,
-    Callback = function(state)
-        up4 = state
-        task.spawn(function()
-            while up4 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"GoldExperience"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up5 = false
-Tabs.Upgrade:AddToggle("p5", {
-    Title = "Auto Sins Gacha",
-    Default = false,
-    Callback = function(state)
-        up5 = state
-        task.spawn(function()
-            while up5 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Sins"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up6 = false
-Tabs.Upgrade:AddToggle("p6", {
-    Title = "Auto Families Gacha",
-    Default = false,
-    Callback = function(state)
-        up6 = state
-        task.spawn(function()
-            while up6 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Families"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up7 = false
-Tabs.Upgrade:AddToggle("p7", {
-    Title = "Auto Nem Gacha",
-    Default = false,
-    Callback = function(state)
-        up7 = state
-        task.spawn(function()
-            while up7 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Nem"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up8 = false
-Tabs.Upgrade:AddToggle("p8", {
-    Title = "Auto MartialArts Gacha",
-    Default = false,
-    Callback = function(state)
-        up8 = state
-        task.spawn(function()
-            while up8 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Martialarts"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local up9 = false
-Tabs.Upgrade:AddToggle("p9", {
-    Title = "Auto Kaisen Gacha",
-    Default = false,
-    Callback = function(state)
-        up9 = state
-        task.spawn(function()
-            while up9 do
-                local args = {
-	key,
-	"System",
-	"VaultGacha",
-	"Roll",
-	"Kaisen"
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-local selectedEgg = ""
-
-local function getEggNames()
-    local eggsFolder = workspace:FindFirstChild("_Eggs")
-    if not eggsFolder then return {} end
-
-    local eggNames = {}
-    for _, egg in ipairs(eggsFolder:GetChildren()) do
-        table.insert(eggNames, egg.Name)
-    end
-    table.sort(eggNames)
-    return eggNames
-end
-
-local eggDropdown = Tabs.Main:AddDropdown("Egg", {
-    Title = "Select Egg",
-    Values = getEggNames(),
-    Multi = false,
-    Default = nil,
-    Callback = function(value)
-        selectedEgg = value
-    end
-})
-
-local eggsFolder = workspace:FindFirstChild("_Eggs")
-if eggsFolder then
-    eggsFolder.ChildAdded:Connect(function()
-        eggDropdown:SetValues(getEggNames())
-    end)
-    eggsFolder.ChildRemoved:Connect(function()
-        eggDropdown:SetValues(getEggNames())
-    end)
-end
-
-local egg = false
-Tabs.Main:AddToggle("Hatch", {
-    Title = "Auto Hatch",
-    Default = false,
-    Callback = function(state)
-        egg = state
-        task.spawn(function()
-            while egg do
-                local args = {
-	key,
-	"System",
-	"Eggs",
-	"Open",
-	selectedEgg,
-}
-				RemoteFireCode:FireServer(unpack(args))
-                task.wait(0.1)
-            end
-        end)
+Tabs.Main:AddButton({
+    Title = "Destroy",
+    Description = "Destroy Egg Animation",
+    Callback = function()
+        if gg then
+            gg:Destroy()
+        end
     end
 })
 
 local vu = game:GetService("VirtualUser")
-local player = game.Players.LocalPlayer
-local afk = false
-Tabs.Settings:AddSection("Player", "wallpaper")
+local Afk = false
+
 Tabs.Settings:AddToggle("AntiAfk", {
     Title = "Anti-Afk",
     Default = false,
     Callback = function(Value)
-        afk = Value
+        Afk = Value
         if Value then
             Fluent:Notify({
                 Title = "Anti AFK",
