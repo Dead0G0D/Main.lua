@@ -25,17 +25,61 @@ local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 
+local function InDungeon()
+    local frame = game.Players.LocalPlayer.PlayerGui:FindFirstChild("UI", true)
+    frame = frame and frame:FindFirstChild("HUD", true)
+    frame = frame and frame:FindFirstChild("Gamemodes", true)
+    frame = frame and frame:FindFirstChild("Dungeon", true)
+    return frame and frame.Visible or false
+end
+
+local function InRaid()
+    local frame = game.Players.LocalPlayer.PlayerGui:FindFirstChild("UI", true)
+    frame = frame and frame:FindFirstChild("HUD", true)
+    frame = frame and frame:FindFirstChild("Gamemodes", true)
+    frame = frame and frame:FindFirstChild("Raid", true)
+    return frame and frame.Visible or false
+end
+
 local function getAllEnemyIDsInRadius(maxDist)
     local ids = {}
+    local function checkFolder(folder)
+        for _, enemy in ipairs(folder:GetChildren()) do
+            if enemy:IsA("BasePart") and enemy:GetAttribute("Health") and enemy:GetAttribute("Health") > 0 then
+                local distance = (root.Position - enemy.Position).Magnitude
+                if distance <= maxDist then
+                    table.insert(ids, enemy:GetAttribute("ID"))
+                end
+            end
+        end
+    end
+    -- World Enemies
     for _, folder in ipairs(workspace.Server.Enemies.World:GetChildren()) do
         if folder:IsA("Folder") then
-            for _, enemy in ipairs(folder:GetChildren()) do
-                if enemy:IsA("BasePart") and enemy:GetAttribute("Health") and enemy:GetAttribute("Health") > 0 then
-                    local distance = (root.Position - enemy.Position).Magnitude
-                    if distance <= maxDist then
-                        table.insert(ids, enemy:GetAttribute("ID"))
-                    end
-                end
+            checkFolder(folder)
+        end
+    end
+    -- Raid Enemies
+    if InRaid() then
+        for _, folder in ipairs(workspace.Server.Enemies.Gamemodes:GetChildren()) do
+            if folder:IsA("Folder") then
+                checkFolder(folder)
+            end
+        end
+    end
+    -- DungeonEasy Enemies
+    if workspace.Server.Gamemodes:FindFirstChild("DungeonEasy") and InDungeon() then
+        for _, folder in ipairs(workspace.Server.Gamemodes.DungeonEasy:GetChildren()) do
+            if folder:IsA("Folder") then
+                checkFolder(folder)
+            end
+        end
+    end
+    -- DungeonMedium Enemies
+    if workspace.Server.Gamemodes:FindFirstChild("DungeonMedium") and InDungeon() then
+        for _, folder in ipairs(workspace.Server.Gamemodes.DungeonMedium:GetChildren()) do
+            if folder:IsA("Folder") then
+                checkFolder(folder)
             end
         end
     end
@@ -64,7 +108,6 @@ Tabs.F:AddToggle("AutoFarmToggle", {
                         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer(unpack(args))
                     end
                 else
-                    -- Mesmo sem inimigos, continua clicando absurdamente rápido
                     local args = {
                         "General",
                         "Attack",
@@ -78,6 +121,87 @@ Tabs.F:AddToggle("AutoFarmToggle", {
                 autoFarmConnection:Disconnect()
                 autoFarmConnection = nil
             end
+        end
+    end
+})
+
+Tabs.T:AddParagraph({
+    Title = "Open Times",
+    Content = 
+        "Raid: XX:15 e XX:45\n" ..
+        "Dungeon Easy: XX:00\n" ..
+        "Dungeon Medium: XX:30"
+})
+
+local lastJoinRaid, lastJoinEasy, lastJoinMedium = 0, 0, 0
+local autoJoinEasy, autoJoinMedium, autoJoinRaid = false, false, false
+local autoJoinConns = {}
+
+-- RAID: XX:15 e XX:45
+Tabs.T:AddToggle("AutoJoinRaid", {
+    Title = "Auto Join Raid",
+    Default = false,
+    Callback = function(state)
+        autoJoinRaid = state
+        if state then
+            autoJoinConns.Raid = game:GetService("RunService").Heartbeat:Connect(function()
+                local min = os.date("*t").min
+                if (min == 15 or min == 45) and os.time() - lastJoinRaid > 50 then
+                    if not InRaid() then
+                        lastJoinRaid = os.time()
+                        game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Raid", "Join")
+                    end
+                end
+            end)
+        elseif autoJoinConns.Raid then
+            autoJoinConns.Raid:Disconnect()
+            autoJoinConns.Raid = nil
+        end
+    end
+})
+
+-- DUNGEON EASY: XX:00
+Tabs.T:AddToggle("AutoJoinDungeonEasy", {
+    Title = "Auto Join Dungeon Easy",
+    Default = false,
+    Callback = function(state)
+        autoJoinEasy = state
+        if state then
+            autoJoinConns.Easy = game:GetService("RunService").Heartbeat:Connect(function()
+                local min = os.date("*t").min
+                if min == 0 and os.time() - lastJoinEasy > 50 then
+                    if not InDungeon() then
+                        lastJoinEasy = os.time()
+                        game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Dungeon Easy", "Join")
+                    end
+                end
+            end)
+        elseif autoJoinConns.Easy then
+            autoJoinConns.Easy:Disconnect()
+            autoJoinConns.Easy = nil
+        end
+    end
+})
+
+-- DUNGEON MEDIUM: XX:30
+Tabs.T:AddToggle("AutoJoinDungeonMedium", {
+    Title = "Auto Join Dungeon Medium",
+    Default = false,
+    Callback = function(state)
+        autoJoinMedium = state
+        if state then
+            autoJoinConns.Medium = game:GetService("RunService").Heartbeat:Connect(function()
+                local min = os.date("*t").min
+                if min == 30 and os.time() - lastJoinMedium > 50 then
+                    if not InDungeon() then
+                        lastJoinMedium = os.time()
+                        game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Dungeon Medium", "Join")
+                    end
+                end
+            end)
+        elseif autoJoinConns.Medium then
+            autoJoinConns.Medium:Disconnect()
+            autoJoinConns.Medium = nil
         end
     end
 })
@@ -124,6 +248,18 @@ Tabs.F:AddToggle("AutoHatchToggle", {
                 autoHatchConnection:Disconnect()
                 autoHatchConnection = nil
             end
+        end
+    end
+})
+
+Tabs.F:AddButton({
+    Title = "Star Animation",
+    Description = "Remove o Star Animation",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        local gui = player.PlayerGui:FindFirstChild("Star_Open")
+        if gui and gui:FindFirstChild("Template") and gui.Template:FindFirstChild("Viewport") then
+            gui.Template.Viewport:Destroy()
         end
     end
 })
@@ -186,37 +322,6 @@ Tabs.P:AddToggle("AutoRollToggle", {
         elseif autoRollConn then
             autoRollConn:Disconnect()
             autoRollConn = nil
-        end
-    end
-})
-
-local autoJoinAll = false
-local autoJoinAllConn
-
-Tabs.T:AddToggle("AutoJoinAllToggle", {
-    Title = "Auto Join All",
-    Default = false,
-    Callback = function(state)
-        autoJoinAll = state
-        if autoJoinAll then
-            autoJoinAllConn = game:GetService("RunService").Heartbeat:Connect(function()
-                local player = game.Players.LocalPlayer
-                local gui = player.PlayerGui
-                local bg = gui and gui:FindFirstChild("UI", true)
-                bg = bg and bg:FindFirstChild("HUD", true)
-                bg = bg and bg:FindFirstChild("GamemodeEnter", true)
-                bg = bg and bg:FindFirstChild("Background", true)
-                if bg and bg.Visible then
-                    local frame = bg:FindFirstChild("Frame")
-                    local confirm = frame and frame:FindFirstChild("Confirm")
-                    if confirm and confirm:IsA("ImageButton") then
-                        pcall(function() firesignal(confirm.MouseButton1Click) end)
-                    end
-                end
-            end)
-        elseif autoJoinAllConn then
-            autoJoinAllConn:Disconnect()
-            autoJoinAllConn = nil
         end
     end
 })
