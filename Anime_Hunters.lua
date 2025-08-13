@@ -339,20 +339,21 @@ Tabs.Settings:AddButton({
 local a = false
 local p = game:GetService("Players")
 local l = p.LocalPlayer
+local antiAfkConn
 
 Tabs.Settings:AddToggle("AntiAfk", {
     Title = "Anti-AFK",
     Default = false,
     Callback = function(v)
-        a = v  
+        a = v
         if a then
             Fluent:Notify({
                 Title = "Anti-AFK",
                 Content = "Ativado",
                 Duration = 4
             })
-            if not l.i then
-                l.i = l.Idled:Connect(function()
+            if not antiAfkConn then
+                antiAfkConn = l.Idled:Connect(function()
                     if a then
                         local vu = game:GetService("VirtualUser")
                         vu:CaptureController()
@@ -360,15 +361,23 @@ Tabs.Settings:AddToggle("AntiAfk", {
                     end
                 end)
             end
+            task.spawn(function()
+                while a do
+                    task.wait(900)
+                    local vu = game:GetService("VirtualUser")
+                    vu:CaptureController()
+                    vu:ClickButton2(Vector2.new())
+                end
+            end)
         else
             Fluent:Notify({
                 Title = "Anti-AFK",
                 Content = "Desativado",
                 Duration = 4
             })
-            if l.i then
-                l.i:Disconnect()
-                l.i = nil
+            if antiAfkConn then
+                antiAfkConn:Disconnect()
+                antiAfkConn = nil
             end
         end
     end
