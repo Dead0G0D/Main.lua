@@ -1847,7 +1847,7 @@ Components.Element = (function()
 			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
 			Text = Title,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
-			TextSize = 16,
+			TextSize = 16.5,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Size = UDim2.new(1, 0, 0, 14),
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -2046,8 +2046,8 @@ Components.Section = (function()
 				RichText = true,
 				Text = Title,
 				TextTransparency = 0,
-				FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-				TextSize = 19,
+				FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+				TextSize = 20,
 				TextXAlignment = "Left",
 				TextYAlignment = "Center",
 				Size = UDim2.fromScale(0, 1),
@@ -2153,12 +2153,8 @@ Components.Tab = (function()
 				RichText = true,
 				TextColor3 = Color3.fromRGB(255, 255, 255),
 				TextTransparency = 0,
-				FontFace = Font.new(
-					"rbxasset://fonts/families/GothamSSm.json",
-					Enum.FontWeight.Regular,
-					Enum.FontStyle.Normal
-				),
-				TextSize = 12,
+				FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+				TextSize = 13,
 				TextXAlignment = "Left",
 				TextYAlignment = "Center",
 				Size = UDim2.new(1, -12, 1, 0),
@@ -2306,9 +2302,9 @@ Components.Button = (function()
 		local Button = {}
 
 		Button.Title = New("TextLabel", {
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextSize = 14,
+			TextSize = 15,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Center,
 			TextYAlignment = Enum.TextYAlignment.Center,
@@ -2435,11 +2431,7 @@ Components.Dialog = (function()
 		})
 
 		NewDialog.Title = New("TextLabel", {
-			FontFace = Font.new(
-				"rbxasset://fonts/families/GothamSSm.json",
-				Enum.FontWeight.SemiBold,
-				Enum.FontStyle.Normal
-			),
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
 			Text = "Dialog",
 			TextColor3 = Color3.fromRGB(240, 240, 240),
 			TextSize = 22,
@@ -2577,8 +2569,8 @@ Components.Notification = (function()
 			RichText = true,
 			TextColor3 = Color3.fromRGB(255, 255, 255),
 			TextTransparency = 0,
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
-			TextSize = 13,
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
+			TextSize = 14,
 			TextXAlignment = "Left",
 			TextYAlignment = "Center",
 			Size = UDim2.new(1, -12, 0, 12),
@@ -2590,10 +2582,10 @@ Components.Notification = (function()
 		})
 
 		NewNotification.ContentLabel = New("TextLabel", {
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			Text = Config.Content,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
-			TextSize = 14,
+			TextSize = 15,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			AutomaticSize = Enum.AutomaticSize.Y,
 			Size = UDim2.new(1, 0, 0, 14),
@@ -2606,7 +2598,7 @@ Components.Notification = (function()
 		})
 
 		NewNotification.SubContentLabel = New("TextLabel", {
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			Text = Config.SubContent,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
 			TextSize = 14,
@@ -2780,9 +2772,9 @@ Components.Textbox = (function()
 		local Textbox = {}
 
 		Textbox.Input = New("TextBox", {
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextSize = 14,
+			TextSize = 15,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -2972,12 +2964,8 @@ Components.TitleBar = (function()
 				New("TextLabel", {
 					RichText = true,
 					Text = Config.Title,
-					FontFace = Font.new(
-						"rbxasset://fonts/families/GothamSSm.json",
-						Enum.FontWeight.Regular,
-						Enum.FontStyle.Normal
-					),
-					TextSize = 12,
+					FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+					TextSize = 14,
 					TextXAlignment = "Left",
 					TextYAlignment = "Center",
 					Size = UDim2.fromScale(0, 1),
@@ -2992,12 +2980,8 @@ Components.TitleBar = (function()
 					RichText = true,
 					Text = Config.SubTitle,
 					TextTransparency = 0.4,
-					FontFace = Font.new(
-						"rbxasset://fonts/families/GothamSSm.json",
-						Enum.FontWeight.Regular,
-						Enum.FontStyle.Normal
-					),
-					TextSize = 12,
+					FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+					TextSize = 13,
 					TextXAlignment = "Left",
 					TextYAlignment = "Center",
 					Size = UDim2.fromScale(0, 1),
@@ -3228,8 +3212,8 @@ Components.Window = (function()
 			RichText = true,
 			Text = "Tab",
 			TextTransparency = 0,
-			FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
-			TextSize = 28,
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+			TextSize = 27,
 			TextXAlignment = "Left",
 			TextYAlignment = "Center",
 			Size = UDim2.new(1, -16, 0, 28),
@@ -3506,7 +3490,7 @@ Components.Window = (function()
 			Dialog.Title.Text = Config.Title
 
 			local Content = New("TextLabel", {
-				FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+				FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 				Text = Config.Content,
 				TextColor3 = Color3.fromRGB(240, 240, 240),
 				TextSize = 14,
@@ -3728,7 +3712,7 @@ ElementsTable.Dropdown = (function()
 		Dropdown.Elements = DropdownFrame
 
 		local DropdownDisplay = New("TextBox", {
-			FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+			FontFace = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
 			Text = "",
 			PlaceholderText = "Value",
 			PlaceholderColor3 = Color3.fromRGB(240, 240, 240),
