@@ -306,8 +306,8 @@ local Themes = {
 		DialogBorder = Color3.fromRGB(80, 0, 120),
 		DialogInput = Color3.fromRGB(50, 0, 90),
 		DialogInputLine = Color3.fromRGB(180, 0, 250),
-		Text = Color3.fromRGB(250, 230, 255),
-		SubText = Color3.fromRGB(210, 160, 250),
+		Text = Color3.fromRGB(30, 30, 30),
+		SubText = Color3.fromRGB(90, 90, 90),
 		Hover = Color3.fromRGB(140, 0, 220),
 		HoverChange = 0.06,
 	},
@@ -1285,7 +1285,7 @@ local Creator = {
 		TextLabel = {
 			BackgroundColor3 = Color3.new(1, 1, 1),
 			BorderColor3 = Color3.new(0, 0, 0),
-			Font = Enum.Font.SourceSans,
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Normal, Enum.FontStyle.Normal),
 			Text = "",
 			TextColor3 = Color3.new(0, 0, 0),
 			BackgroundTransparency = 1,
@@ -1295,7 +1295,7 @@ local Creator = {
 			BackgroundColor3 = Color3.new(1, 1, 1),
 			BorderColor3 = Color3.new(0, 0, 0),
 			AutoButtonColor = false,
-			Font = Enum.Font.SourceSans,
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Normal, Enum.FontStyle.Normal),
 			Text = "",
 			TextColor3 = Color3.new(0, 0, 0),
 			TextSize = 14,
@@ -1304,7 +1304,7 @@ local Creator = {
 			BackgroundColor3 = Color3.new(1, 1, 1),
 			BorderColor3 = Color3.new(0, 0, 0),
 			ClearTextOnFocus = false,
-			Font = Enum.Font.SourceSans,
+			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Normal, Enum.FontStyle.Normal),
 			Text = "",
 			TextColor3 = Color3.new(0, 0, 0),
 			TextSize = 14,
@@ -1847,7 +1847,7 @@ Components.Element = (function()
 			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
 			Text = Title,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
-			TextSize = 15,
+			TextSize = 16,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Size = UDim2.new(1, 0, 0, 14),
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1861,7 +1861,7 @@ Components.Element = (function()
 			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			Text = Desc,
 			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextSize = 13.9,
+			TextSize = 14,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -2047,7 +2047,7 @@ Components.Section = (function()
 				Text = Title,
 				TextTransparency = 0,
 				FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-				TextSize = 20,
+				TextSize = 19,
 				TextXAlignment = "Left",
 				TextYAlignment = "Center",
 				Size = UDim2.fromScale(0, 1),
@@ -3212,17 +3212,6 @@ Components.Window = (function()
 		Window.AllElements = AllElements
 		Window.RegisterElement = RegisterElement
 		Window.UpdateElementVisibility = UpdateElementVisibility
- 
-        local CustomImageLabel = New("ImageLabel", {
-        Image = Components.Assets.CustomImage, -- Ou use o rbxassetid diretamente: "rbxassetid://SEU_ID_DA_IMAGEM"
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 100, 0, 100), -- Ajuste o tamanho conforme necessário (largura, altura)
-        Position = UDim2.new(0, 10, 0, 10), -- Ajuste a posição conforme necessário (X, Y)
-        -- Outras propriedades que você pode querer ajustar:
-         -- ScaleType = Enum.ScaleType.Fit,
-            -- AnchorPoint = Vector2.new(0.5, 0.5),
-            -- ZIndex = 3, -- Certifique-se de que esteja acima de outros elementos se necessário
-        })
                                     
 		local TabFrame = New("Frame", {
 			Size = UDim2.new(0, Window.TabWidth, 1, -66),
@@ -3279,7 +3268,6 @@ Components.Window = (function()
 			Window.AcrylicPaint.Frame,
 			Window.TabDisplay,
 			Window.ContainerCanvas,
-            CustomImageLabel,
 			TabFrame,
 			ResizeStartFrame,
 		})
