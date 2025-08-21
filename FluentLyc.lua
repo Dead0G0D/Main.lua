@@ -1831,7 +1831,6 @@ local Components = {
 		Min = "rbxassetid://9886659276",
 		Max = "rbxassetid://9886659406",
 		Restore = "rbxassetid://9886659001",
-        CustomImage = "rbxassetid://71192722711909",
 	},
 }
 
@@ -1848,7 +1847,7 @@ Components.Element = (function()
 			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
 			Text = Title,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
-			TextSize = 17,
+			TextSize = 15,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Size = UDim2.new(1, 0, 0, 14),
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1862,7 +1861,7 @@ Components.Element = (function()
 			FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 			Text = Desc,
 			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextSize = 15,
+			TextSize = 13.9,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
