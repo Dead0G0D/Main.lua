@@ -25,7 +25,7 @@ ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
 GameName = ProductInfo.Name
 
 local Window = WindUI:CreateWindow({
-    Title = "Latency" .. GameName,
+    Title = "iHave" .. GameName,
     Icon = "landmark",
     Author = "?",
     Folder = "Latency" .. GameName,
