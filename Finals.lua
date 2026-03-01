@@ -10,10 +10,10 @@ ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
 GameName = ProductInfo.Name
 
 local Window = Starlight:CreateWindow({
-    Name = "//",
+    Name = "/Latency/",
     Subtitle = GameName,
     Icon = "136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
-    DefaultSize = UDim2.fromOffset(550, 380),
+    DefaultSize = UDim2.fromOffset(590, 380),
     BuildWarnings = true,
     InterfaceAdvertisingPrompts = true,
     NotifyOnCallbackError = true,
