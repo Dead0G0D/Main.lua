@@ -364,7 +364,6 @@ Pl:CreateToggle({
 }, "TOGGLE_AUTO_EQUIP")
 
 local antiAfkEnabled = false
-
 ConfigMisc:CreateToggle({
     Name = "Anti AFK",
     Icon = NebulaIcons:GetIcon('activity', 'Phosphor'),
