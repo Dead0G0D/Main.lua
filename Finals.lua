@@ -72,12 +72,12 @@ local Up = MainTab:CreateGroupbox({
     Name = "Player Upgrades",
     Icon = NebulaIcons:GetIcon('dots-three-circle', 'Phosphor'),
     Column = 1,
-}, "GB_STATS")
+}, "GB_UPGRADES")
 
 local GamemodeBox = Modes:CreateGroupbox({
     Name = "Auto Modes",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
-    Column = 1,
+    Column = 2,
 }, "GB_AUTOFARMMODES")
 
 local ConfigMisc = Config:CreateGroupbox({
