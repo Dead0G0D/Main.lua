@@ -83,6 +83,34 @@ local ConfigMisc = Config:CreateGroupbox({
 Theme:BuildThemeGroupbox(1)
 Config:BuildConfigGroupbox(1)
 
+local ModeConfig = {
+    Type = "Text",
+    Root = function()
+        return LocalPlayer.PlayerGui:FindFirstChild("DungeonGui")
+    end,
+    Path = function()
+        return LocalPlayer.PlayerGui.DungeonGui.Canvas.DungeonUI.DungeonName.NameLabel
+    end,
+}
+
+local function Modes(mode)
+    local rootSuccess, rootInstance = pcall(ModeConfig.Root)
+    if not rootSuccess or not rootInstance or not rootInstance.Enabled then return false end
+
+    local pathSuccess, element = pcall(ModeConfig.Path)
+    if not pathSuccess or not element then return false end
+
+    if ModeConfig.Type == "Text" then
+        if not element.Visible then return false end
+        return element.ContentText == mode
+    elseif ModeConfig.Type == "Visible" then
+        local frame = element:FindFirstChild(mode, true)
+        return frame and frame.Enabled or false
+    end
+
+    return false
+end
+
 local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
 local ac = false
 Up:CreateDivider()
@@ -145,7 +173,6 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Callback = function(Value)
         farmRunning = Value
         if not Value then return end
-
         task.spawn(function()
             while farmRunning do
                 if not selectedNpcNames or #selectedNpcNames == 0 then
@@ -270,7 +297,7 @@ autopetroll:AddDropdown({
 local UpOptions = (function()
     local list = {}
     for _, v in ipairs(game:GetService("ReplicatedStorage").SharedData.PowerConfigs:GetChildren()) do
-              if v.Name ~= "Hunter" and v.Name ~= "PyramidKey" then
+              if v.Name ~= "Hunter" and v.Name ~= "PyramidKey" and v.Name ~= "Dungeon" then
                   table.insert(list, v.Name)
               end
           end
