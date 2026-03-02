@@ -440,13 +440,7 @@ local function getTimerText(path)
     return time or "??"
 end
 
-local TimeMp = GamemodeBox:CreateGroupbox({
-    Name = "Modes",
-    Icon = NebulaIcons:GetIcon('clock', 'Phosphor'),
-    Column = 2,
-}, "GB_MODES")
-
-local ModesParagraph = TimeMp:CreateParagraph({
+local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
     Content = "Carregando...",
 }, "PARA_MODES")
@@ -460,7 +454,7 @@ local function updateTimers()
         "Dungeon Easy: " .. easyTimer .. "\n" ..
         "Dungeon Medium: " .. mediumTimer
 
-    ModesParagraph:Set{Content = content}
+    timemodes:Set{Content = content}
 end
 
 task.spawn(function()
