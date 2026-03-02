@@ -29,7 +29,7 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = NebulaIcons:GetIcon('home', 'Symbols'),
+    Icon = NebulaIcons:GetIcon('home', 'Symbols'), -- 89149658808007
     Columns = 2,
 }, "TAB_MAIN")
 
@@ -283,7 +283,6 @@ end)()
 
 local petroll = islands[1] or ""
 local autopetroll = false
-Up:CreateDivider()
 local autopetroll = Up:CreateToggle({
     Name = "Pet Roll",
     Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
@@ -410,6 +409,8 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP")
 
+Up:CreateDivider()
+
 local autoEquip2 = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Accessory",
@@ -429,6 +430,45 @@ Pl:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_EQUIP2")
+
+local infopr = workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon
+local function getTimerText(path)
+    local ok, label = pcall(function() return path end)
+    if not ok or not label then return "??" end
+    local text = label.Text
+    local time = text:match("%d+:%d+")
+    return time or "??"
+end
+
+local TimeMp = MainTab:CreateGroupbox({
+    Name = "Modes",
+    Icon = NebulaIcons:GetIcon('clock', 'Phosphor'),
+    Column = 2,
+}, "GB_MODES")
+
+local ModesParagraph = EventBox:CreateParagraph({
+    Name = "Dungeon Timers",
+    Content = "Carregando...",
+}, "PARA_MODES")
+
+local function updateTimers()
+    local easyTimer = getTimerText(infopr.Easy.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
+    local mediumTimer = getTimerText(infopr.Medium.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
+
+    -- Após abrir ainda tem 60s para iniciar
+    local content =
+        "Dungeon Easy: " .. easyTimer .. "\n" ..
+        "Dungeon Medium: " .. mediumTimer
+
+    ModesParagraph:Set{Content = content}
+end
+
+task.spawn(function()
+    while true do
+        updateTimers()
+        task.wait(1)
+    end
+end)
 
 local modeFarm = false
 local GMF = GamemodeBox:CreateToggle({
