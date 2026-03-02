@@ -74,7 +74,7 @@ local Up = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_STATS")
 
-local GamemodeBox = MS:CreateGroupbox({
+local GamemodeBox = Modes:CreateGroupbox({
     Name = "Auto Modes",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
     Column = 1,
