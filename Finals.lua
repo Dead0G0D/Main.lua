@@ -440,7 +440,13 @@ local function getTimerText(path)
     return time or "??"
 end
 
-local ModesParagraph = Modes:CreateParagraph({
+local TimeMp = GamemodeBox:CreateGroupbox({
+    Name = "Modes",
+    Icon = NebulaIcons:GetIcon('clock', 'Phosphor'),
+    Column = 2,
+}, "GB_MODES")
+
+local ModesParagraph = TimeMp:CreateParagraph({
     Name = "Dungeon Timers",
     Content = "Carregando...",
 }, "PARA_MODES")
