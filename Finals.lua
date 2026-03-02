@@ -431,7 +431,6 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP2")
 
-local infopr = workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon
 local function getTimerText(path)
     local ok, label = pcall(function() return path end)
     if not ok or not label then return "??" end
@@ -446,8 +445,8 @@ local timemodes = GamemodeBox:CreateParagraph({
 }, "PARA_MODES")
 
 local function updateTimers()
-    local easyTimer = getTimerText(infopr.Easy.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
-    local mediumTimer = getTimerText(infopr.Medium.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
+    local easyTimer = getTimerText(workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon.Easy.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
+    local mediumTimer = getTimerText(workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon.Medium.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
 
     -- Após abrir ainda tem 60s para iniciar
     local content =
