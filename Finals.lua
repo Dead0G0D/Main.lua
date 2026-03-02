@@ -34,8 +34,8 @@ local MainTab = MS:CreateTab({
 }, "TAB_MAIN")
 
 local Modes = MS:CreateTab({
-    Name = "| ?",
-    Icon = NebulaIcons:GetIcon('house', 'Symbols'),
+    Name = "| Gamemodes",
+    Icon = NebulaIcons:GetIcon('castle', 'Symbols'),
     Columns = 2,
 }, "TAB_GM")
 
@@ -71,8 +71,14 @@ local Pl = MainTab:CreateGroupbox({
 local Up = MainTab:CreateGroupbox({
     Name = "Player Upgrades",
     Icon = NebulaIcons:GetIcon('dots-three-circle', 'Phosphor'),
-    Column = 2,
+    Column = 1,
 }, "GB_STATS")
+
+local GamemodeBox = MainTab:CreateGroupbox({
+    Name = "Auto Modes",
+    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Column = 1,
+}, "GB_AUTOFARMMODES")
 
 local ConfigMisc = Config:CreateGroupbox({
     Name = "Misc",
@@ -108,6 +114,14 @@ local function Modes(mode)
         return frame and frame.Enabled or false
     end
 
+    return false
+end
+
+local activeModes = {"Dungeon Easy", "Dungeon Medium", "Pyramid Raid"}
+local function AnyModeActive()
+    for _, mode in ipairs(activeModes) do
+        if Modes(mode) then return true end
+    end
     return false
 end
 
@@ -175,6 +189,10 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
         if not Value then return end
         task.spawn(function()
             while farmRunning do
+                if AnyModeActive() then
+                    task.wait(0.5)
+                    continue
+                end
                 if not selectedNpcNames or #selectedNpcNames == 0 then
                     task.wait(0.5)
                     continue
@@ -391,6 +409,74 @@ Pl:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_EQUIP")
+
+local autoEquip2 = false
+Pl:CreateToggle({
+    Name = "Auto Equip Best Accessory",
+    Icon = NebulaIcons:GetIcon('armchair', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoEquip2 = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoEquip2 do
+                pcall(function()
+                    rp:WaitForChild("AccessoryEquip"):FireServer("EquipBest")
+                end)
+                task.wait(35)
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_EQUIP2")
+
+local modeFarm = false
+local GMF = GamemodeBox:CreateToggle({
+    Name = "Auto Farm Modes",
+    Icon = NebulaIcons:GetIcon('shield-sword', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        modeFarm = Value
+        if not Value then return end
+        task.spawn(function()
+            while modeFarm do
+                if not AnyModeActive() then
+                    task.wait(0.5)
+                    continue
+                end
+
+                for _, npc in ipairs(workspace.Enemies:GetChildren()) do
+                    if not modeFarm or not AnyModeActive() then break end
+                    
+                    local isDungeon = npc:GetAttribute("IsDungeonEnemy")
+                    local isRaid = npc:GetAttribute("IsRaidEnemy")
+                    if not isDungeon and not isRaid then continue end
+                    
+                    local h = npc:FindFirstChild("Humanoid")
+                    local hrpNpc = npc:FindFirstChild("HumanoidRootPart")
+                    local canTake = npc:FindFirstChild("CanTakeDamage")
+                    if not h or h.Health <= 0 or not hrpNpc or not canTake or not canTake.Value then continue end
+
+                    repeat
+                        if not modeFarm or not npc.Parent then break end
+                        if not AnyModeActive() then break end
+
+                        local char = LocalPlayer.Character
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        hrpNpc = npc:FindFirstChild("HumanoidRootPart")
+                        if not hrp or not hrpNpc then break end
+
+                        hrp.CFrame = CFrame.new((hrpNpc.CFrame * CFrame.new(0, 0, 2.5)).Position, hrpNpc.Position)
+                        RunService.Heartbeat:Wait()
+                    until not npc.Parent
+
+                    task.wait(0.1)
+                end
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_FARM_MODES")
 
 local antiAfkEnabled = false
 ConfigMisc:CreateToggle({
