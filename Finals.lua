@@ -13,7 +13,7 @@ local Window = Starlight:CreateWindow({
     Name = "/Latency/",
     Subtitle = GameName,
     Icon = "136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
-    DefaultSize = UDim2.fromOffset(590, 380),
+    DefaultSize = UDim2.fromOffset(540, 800),
     BuildWarnings = true,
     InterfaceAdvertisingPrompts = true,
     NotifyOnCallbackError = true,
@@ -84,25 +84,27 @@ Theme:BuildThemeGroupbox(1)
 Config:BuildConfigGroupbox(1)
 
 local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
-local comboConn
-
-AutoFarmBox:CreateToggle({
+local ac = false
+Up:CreateDivider()
+local Atc = AutoFarmBox:CreateToggle({
     Name = "Auto Click",
     Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
-        if comboConn then
-            comboConn:Disconnect()
-            comboConn = nil
-        end
+        ac = Value
         if not Value then return end
-        comboConn = RunService.Heartbeat:Connect(function()
-            rp:WaitForChild("AttackEvent"):FireServer()
-            rp:WaitForChild("ClickRemote"):FireServer()
+        task.spawn(function()
+            while ac do
+                pcall(function()
+                rp:WaitForChild("AttackEvent"):FireServer()
+                rp:WaitForChild("ClickRemote"):FireServer()
+                end)
+                RunService.Heartbeat:Wait()
+            end
         end)
     end,
-}, "TOGGLE_AUTO_CLICK")
+}, "TOGGLE_AUTOCLICK")
 
 local farmRunning = false
 local selectedNpcNames = {}
@@ -206,7 +208,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
     CurrentOptions = {},
-    Placeholder = "Select npcs",
+    Placeholder = "Select",
     MultipleOptions = true,
     Callback = function(Options)
         selectedNpcNames = Options
@@ -345,7 +347,7 @@ autoprott2:AddDropdown({
 
 local autoEquip = false
 Pl:CreateToggle({
-    Name = "Auto Equip Best",
+    Name = "Auto Equip Best Avatar",
     Icon = NebulaIcons:GetIcon('armchair', 'Phosphor'),
     CurrentValue = false,
     Style = 2,
@@ -357,7 +359,7 @@ Pl:CreateToggle({
                 pcall(function()
                     rp:WaitForChild("AvatarEquip"):FireServer("EquipBest")
                 end)
-                task.wait(60)
+                task.wait(35)
             end
         end)
     end,
@@ -374,7 +376,7 @@ ConfigMisc:CreateToggle({
         if Value then
             task.spawn(function()
                 while antiAfkEnabled do
-                    task.wait(1080)
+                    task.wait(500)
                     if not antiAfkEnabled then break end
                     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
                     if hum then hum.Jump = true end
