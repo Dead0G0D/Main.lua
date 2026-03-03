@@ -69,6 +69,12 @@ local Gm = Modes:CreateGroupbox({
     Column = 1,
 }, "GB_JLMODES")
 
+local SV = Modes:CreateGroupbox({
+    Name = "Save Position",
+    Icon = NebulaIcons:GetIcon('map', 'Phosphor'),
+    Column = 1,
+}, "GB_SVMODES")
+
 local Theme = SS:CreateTab({
     Name = "| Themes",
     Icon = NebulaIcons:GetIcon('iframe', 'Symbols'),
@@ -554,7 +560,7 @@ GamemodeBox:CreateToggle({
 
         task.spawn(function()
             while autoRaid do
-                if not Modes("Pyramid Raid") then
+                if not Modes("Raid Pyramid") then
                     task.wait(0.5)
                     continue
                 end
@@ -609,6 +615,28 @@ GamemodeBox:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_RAID")
+
+local SvPosition = nil
+
+local PositionParagraph = SV:CreateParagraph({
+    Name = "Saved Position",
+    Content = "No position saved yet",
+}, "PARA_SAVED_POS")
+
+local svp = SV:CreateButton({
+    Name = "Save Position",
+    Icon = NebulaIcons:GetIcon('map-pin', 'Phosphor'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            SvPosition = hrp.Position
+            PositionParagraph.Instance.Content.Text = string.format("X: %.2f\nY: %.2f\nZ: %.2f", SvPosition.X, SvPosition.Y, SvPosition.Z)
+        end
+    end,
+}, "BTN_SAVE_POS")
 
 local lveasy = ""
 local Join2 = Gm:CreateInput({
