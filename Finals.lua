@@ -29,7 +29,7 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = NebulaIcons:GetIcon('kk', 'Material'), -- 89149658808007
+    Icon = 89149658808007,
     Columns = 2,
 }, "TAB_MAIN")
                --Groupboxs--
@@ -467,17 +467,17 @@ local function updateEventParagraph(paragraph, hour, min, sec)
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
         "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer
 
-    paragraph:Set({Content = text})  -- ✅ Corrigido
+    paragraph:Set({Content = text})
 end
 
 local now = os.date("!*t")
-updateEventParagraph(timemodes, now.hour, now.min, now.sec)  -- ✅ Corrigido
+updateEventParagraph(timemodes, now.hour, now.min, now.sec)
 
-task.spawn(function()  -- ✅ task.spawn ao invés de spawn
+task.spawn(function()
     while true do
         local now = os.date("!*t")
-        updateEventParagraph(timemodes, now.hour, now.min, now.sec)  -- ✅ Corrigido
-        task.wait(1)  -- ✅ task.wait ao invés de wait
+        updateEventParagraph(timemodes, now.hour, now.min, now.sec)
+        task.wait(1)
     end
 end)
 
