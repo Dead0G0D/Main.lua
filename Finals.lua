@@ -123,7 +123,7 @@ local function Modes(mode)
     return false
 end
 
-local activeModes = {"Dungeon Easy", "Dungeon Medium", "Pyramid Raid"}
+local activeModes = {"Dungeon Easy", "Dungeon Medium", "Raid Pyramid"}
 local function AnyModeActive()
     for _, mode in ipairs(activeModes) do
         if Modes(mode) then return true end
