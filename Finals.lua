@@ -508,19 +508,20 @@ local GMF = GamemodeBox:CreateToggle({
                     local hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                     local canTake = npc:FindFirstChild("CanTakeDamage")
                     if not h or h.Health <= 0 or not hrpNpc or not canTake or not canTake.Value then continue end
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
                     repeat
                         if not modeFarm or not npc.Parent then break end
                         if not AnyModeActive() then break end
-
-                        local char = LocalPlayer.Character
-                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if not h or h.Health <= 0 then break end
+                        
                         hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                         if not hrp or not hrpNpc then break end
 
                         hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
-                        RunService.Heartbeat:Wait()
-                    until not npc.Parent
+                        task.wait(.1)
+                    until not npc.Parent or not h or h.Health <= 0
 
                     task.wait(0.1)
                 end
@@ -528,6 +529,51 @@ local GMF = GamemodeBox:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_FARM_MODES")
+
+local lveasy = ""
+local Join1 = Gm:CreateInput({
+    Name = "Leave Room Easy",
+    Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
+    CurrentValue = "",
+    PlaceholderText = "e.g. 5",
+    Numeric = true,
+    Enter = true,
+    MaxCharacters = "30",
+    Callback = function(Text)
+       lveasy = Value
+       print("InputEasy: Dungeon Easy auto-leave room:", lveasy)
+    end,
+}, "JOIN1")
+
+local lvmedium = ""
+local Join1 = Gm:CreateInput({
+    Name = "Leave Room Medium",
+    Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
+    CurrentValue = "",
+    PlaceholderText = "e.g. 5",
+    Numeric = true,
+    Enter = true,
+    MaxCharacters = "30",
+    Callback = function(Text)
+       lvmedium = Value
+       print("InputMedium: Dungeon Medium auto-leave room:", lvmedium)
+    end,
+}, "JOIN2")
+
+local lvraid = ""
+local Join1 = Gm:CreateInput({
+    Name = "Leave Wave Raid",
+    Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
+    CurrentValue = "",
+    PlaceholderText = "e.g. 5",
+    Numeric = true,
+    Enter = true,
+    MaxCharacters = "",
+    Callback = function(Text)
+       lvraid = Value
+       print("InputRaid: Raid auto-leave wave:", lvraid)
+    end,
+}, "JOIN3")
 
 local antiAfkEnabled = false
 ConfigMisc:CreateToggle({
