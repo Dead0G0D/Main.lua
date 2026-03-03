@@ -496,6 +496,7 @@ local GMF = GamemodeBox:CreateToggle({
     Callback = function(Value)
         modeFarm = Value
         if not Value then return end
+
         task.spawn(function()
             while modeFarm do
                 if not AnyModeActive() then
@@ -503,31 +504,38 @@ local GMF = GamemodeBox:CreateToggle({
                     continue
                 end
 
+                local foundAny = false
                 for _, npc in ipairs(workspace.Enemies:GetChildren()) do
                     local isDungeon = npc:GetAttribute("IsDungeonEnemy") == true
                     local isRaid = npc:GetAttribute("IsRaidEnemy") == true
                     if not isDungeon and not isRaid then continue end
-                    
+
                     local h = npc:FindFirstChild("Humanoid")
                     local hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                     local canTake = npc:FindFirstChild("CanTakeDamage")
                     if not h or h.Health <= 0 or not hrpNpc or not canTake or not canTake.Value then continue end
+
+                    foundAny = true
+
                     local char = LocalPlayer.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
                     repeat
                         if not modeFarm or not npc.Parent then break end
+                        if not AnyModeActive() then break end
                         if not h or h.Health <= 0 then break end
-                        
+
                         hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                         if not hrp or not hrpNpc then break end
 
                         hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
-                        task.wait(.1)
+                        task.wait(0.1)
                     until not npc.Parent or not h or h.Health <= 0
 
                     task.wait(0.1)
                 end
+
+                if not foundAny then task.wait(0.5) end
             end
         end)
     end,
