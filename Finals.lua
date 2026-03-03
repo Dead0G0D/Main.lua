@@ -504,8 +504,6 @@ local GMF = GamemodeBox:CreateToggle({
                 end
 
                 for _, npc in ipairs(workspace.Enemies:GetChildren()) do
-                    if not modeFarm or not AnyModeActive() then break end
-                    
                     local isDungeon = npc:GetAttribute("IsDungeonEnemy")
                     local isRaid = npc:GetAttribute("IsRaidEnemy")
                     if not isDungeon and not isRaid then continue end
@@ -519,7 +517,6 @@ local GMF = GamemodeBox:CreateToggle({
 
                     repeat
                         if not modeFarm or not npc.Parent then break end
-                        if not AnyModeActive() then break end
                         if not h or h.Health <= 0 then break end
                         
                         hrpNpc = npc:FindFirstChild("HumanoidRootPart")
@@ -544,7 +541,7 @@ local Join2 = Gm:CreateInput({
     Numeric = true,
     Enter = true,
     MaxCharacters = 30,
-    Callback = function(Text)
+    Callback = function(Value)
        lveasy = Value
        print("InputEasy: Dungeon Easy auto-leave room:", lveasy)
     end,
@@ -558,7 +555,7 @@ local Join3 = Gm:CreateInput({
     Numeric = true,
     Enter = true,
     MaxCharacters = 30,
-    Callback = function(Text)
+    Callback = function(Value)
        lvmedium = Value
        print("InputMedium: Dungeon Medium auto-leave room:", lvmedium)
     end,
@@ -572,7 +569,7 @@ local Join1 = Gm:CreateInput({
     PlaceholderText = "e.g. 5",
     Numeric = true,
     Enter = true,
-    Callback = function(Text)
+    Callback = function(Value)
        lvraid = Value
        print("InputRaid: Raid auto-leave wave:", lvraid)
     end,
