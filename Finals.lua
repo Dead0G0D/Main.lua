@@ -445,7 +445,7 @@ Pl:CreateToggle({
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
-    Icon = NebulaIcons:GetIcon('clock', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('clock-fading', 'Lucide'),
     Content = "Carregando...",
 }, "PARA_MODES")
 
@@ -620,13 +620,13 @@ GamemodeBox:CreateToggle({
 local SvPosition = nil
 local PositionParagraph = SV:CreateParagraph({
     Name = "Saved Position",
-    Icon = NebulaIcons:GetIcon('map-pin', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('map-pinned', 'Lucide'),
     Content = "No position saved yet",
 }, "PARA_SAVED_POS")
 
 local svp = SV:CreateButton({
     Name = "Save Position",
-    Icon = NebulaIcons:GetIcon('map-pin', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('map-pinned', 'Lucide'),
     Style = 1,
     CenterContent = true,
     Callback = function()
