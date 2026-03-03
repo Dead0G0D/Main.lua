@@ -29,7 +29,7 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = 89149658808007,
+    Icon = 77630928106024,
     Columns = 2,
 }, "TAB_MAIN")
                --Groupboxs--
@@ -518,7 +518,7 @@ local GMF = GamemodeBox:CreateToggle({
                         hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                         if not hrp or not hrpNpc then break end
 
-                        hrp.CFrame = CFrame.new((hrpNpc.CFrame * CFrame.new(0, 0, 2.5)).Position, hrpNpc.Position)
+                        hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
                         RunService.Heartbeat:Wait()
                     until not npc.Parent
 
