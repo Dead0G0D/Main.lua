@@ -467,17 +467,17 @@ local function updateEventParagraph(paragraph, hour, min, sec)
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
         "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer
 
-    timemodes:Set{Content = content}
+    paragraph:Set({Content = text})  -- ✅ Corrigido
 end
 
 local now = os.date("!*t")
-updateEventParagraph(infog, now.hour, now.min, now.sec)
+updateEventParagraph(timemodes, now.hour, now.min, now.sec)  -- ✅ Corrigido
 
-spawn(function()
+task.spawn(function()  -- ✅ task.spawn ao invés de spawn
     while true do
         local now = os.date("!*t")
-        updateEventParagraph(infog, now.hour, now.min, now.sec)
-        wait(1)
+        updateEventParagraph(timemodes, now.hour, now.min, now.sec)  -- ✅ Corrigido
+        task.wait(1)  -- ✅ task.wait ao invés de wait
     end
 end)
 
