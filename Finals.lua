@@ -63,6 +63,12 @@ local GamemodeBox = Modes:CreateGroupbox({
     Column = 1,
 }, "GB_AUTOFARMMODES")
 
+local Gm = Modes:CreateGroupbox({
+    Name = "Join/Leave",
+    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Column = 1,
+}, "GB_JLMODES")
+
 local Theme = SS:CreateTab({
     Name = "| Themes",
     Icon = NebulaIcons:GetIcon('iframe', 'Symbols'),
@@ -531,7 +537,7 @@ local GMF = GamemodeBox:CreateToggle({
 }, "TOGGLE_AUTO_FARM_MODES")
 
 local lveasy = ""
-local Join1 = Gm:CreateInput({
+local Join2 = Gm:CreateInput({
     Name = "Leave Room Easy",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
@@ -546,7 +552,7 @@ local Join1 = Gm:CreateInput({
 }, "JOIN1")
 
 local lvmedium = ""
-local Join1 = Gm:CreateInput({
+local Join3 = Gm:CreateInput({
     Name = "Leave Room Medium",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
