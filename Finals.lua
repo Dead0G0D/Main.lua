@@ -504,8 +504,8 @@ local GMF = GamemodeBox:CreateToggle({
                 end
 
                 for _, npc in ipairs(workspace.Enemies:GetChildren()) do
-                    local isDungeon = npc:GetAttribute("IsDungeonEnemy")
-                    local isRaid = npc:GetAttribute("IsRaidEnemy")
+                    local isDungeon = npc:GetAttribute("IsDungeonEnemy") == true
+                    local isRaid = npc:GetAttribute("IsRaidEnemy") == true
                     if not isDungeon and not isRaid then continue end
                     
                     local h = npc:FindFirstChild("Humanoid")
