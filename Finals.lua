@@ -445,6 +445,7 @@ Pl:CreateToggle({
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
+    Icon = NebulaIcons:GetIcon('clock', 'Phosphor'),
     Content = "Carregando...",
 }, "PARA_MODES")
 
@@ -617,9 +618,9 @@ GamemodeBox:CreateToggle({
 }, "TOGGLE_AUTO_RAID")
 
 local SvPosition = nil
-
 local PositionParagraph = SV:CreateParagraph({
     Name = "Saved Position",
+    Icon = NebulaIcons:GetIcon('map-pin', 'Phosphor'),
     Content = "No position saved yet",
 }, "PARA_SAVED_POS")
 
@@ -633,7 +634,7 @@ local svp = SV:CreateButton({
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
             SvPosition = hrp.Position
-            PositionParagraph.Instance.Content.Text = string.format("X: %.2f\nY: %.2f\nZ: %.2f", SvPosition.X, SvPosition.Y, SvPosition.Z)
+            PositionParagraph.Instance.Content.Text = string.format("X: %.2f, Y: %.2f, Z: %.2f", SvPosition.X, SvPosition.Y, SvPosition.Z)
         end
     end,
 }, "BTN_SAVE_POS")
