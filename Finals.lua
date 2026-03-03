@@ -541,10 +541,9 @@ local Join2 = Gm:CreateInput({
     Name = "Leave Room Easy",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
-    PlaceholderText = "e.g. 5",
     Numeric = true,
     Enter = true,
-    MaxCharacters = "30",
+    MaxCharacters = 30,
     Callback = function(Text)
        lveasy = Value
        print("InputEasy: Dungeon Easy auto-leave room:", lveasy)
@@ -556,10 +555,9 @@ local Join3 = Gm:CreateInput({
     Name = "Leave Room Medium",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
-    PlaceholderText = "e.g. 5",
     Numeric = true,
     Enter = true,
-    MaxCharacters = "30",
+    MaxCharacters = 30,
     Callback = function(Text)
        lvmedium = Value
        print("InputMedium: Dungeon Medium auto-leave room:", lvmedium)
@@ -574,7 +572,6 @@ local Join1 = Gm:CreateInput({
     PlaceholderText = "e.g. 5",
     Numeric = true,
     Enter = true,
-    MaxCharacters = "",
     Callback = function(Text)
        lvraid = Value
        print("InputRaid: Raid auto-leave wave:", lvraid)
