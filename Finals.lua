@@ -542,7 +542,8 @@ local GMF = GamemodeBox:CreateToggle({
 }, "TOGGLE_AUTO_FARM_MODES")
 
 local autoRaid = false
-local AR = GamemodeBox:CreateToggle({
+
+GamemodeBox:CreateToggle({
     Name = "Auto Raid",
     Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
     CurrentValue = false,
@@ -564,7 +565,9 @@ local AR = GamemodeBox:CreateToggle({
 
                 if ok and label and label.Text == "Go to Next Room" then
                     for _, folder in ipairs(workspace:GetChildren()) do
-                        if folder.Name:match("Raid_W4_") then
+                        if folder.Name:match("Raid_W4") then
+                            print("[AutoRaid] Achou pasta:", folder.Name)
+
                             local tpPaths = {
                                 folder.Core and folder.Core:FindFirstChild("TP"),
                                 folder.Start and folder.Start:FindFirstChild("TP"),
@@ -572,22 +575,36 @@ local AR = GamemodeBox:CreateToggle({
 
                             for _, tp in ipairs(tpPaths) do
                                 if tp then
+                                    print("[AutoRaid] Achou TP:", tp:GetFullName())
+
                                     local ti = tp:FindFirstChild("TouchInterest")
                                     if ti then
+                                        print("[AutoRaid] Achou TouchInterest em:", tp:GetFullName())
                                         pcall(function()
                                             firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 0)
                                             task.wait(0.1)
                                             firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 1)
                                         end)
+                                    else
+                                        print("[AutoRaid] SEM TouchInterest em:", tp:GetFullName())
+                                        for _, child in ipairs(tp:GetChildren()) do
+                                            print("[AutoRaid] filho:", child.Name, child.ClassName)
+                                        end
                                     end
                                 end
                             end
                             break
                         end
                     end
+                else
+                    if ok and label then
+                        print("[AutoRaid] RoomsLabel text:", label.Text)
+                    else
+                        print("[AutoRaid] Nao achou RoomsLabel")
+                    end
                 end
 
-                task.wait(.1)
+                task.wait(0.5)
             end
         end)
     end,
