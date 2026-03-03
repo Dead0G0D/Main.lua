@@ -535,7 +535,7 @@ local GMF = GamemodeBox:CreateToggle({
                     task.wait(0.1)
                 end
 
-                if not foundAny then task.wait(0.1) end
+                if not foundAny then task.wait(.1) end
             end
         end)
     end,
@@ -564,13 +564,22 @@ local AR = GamemodeBox:CreateToggle({
 
                 if ok and label and label.Text == "Go to Next Room" then
                     for _, folder in ipairs(workspace:GetChildren()) do
-                        if folder.Name:match("Raid_W4") then
-                            local tp = folder:FindFirstChild("Core") and folder.Core:FindFirstChild("TP")
-                            if tp then
-                                for _, part in ipairs(tp:GetChildren()) do
-                                    pcall(function()
-                                        firetouchinterest(part:FindFirstChild("TouchInterest"), LocalPlayer.Character.HumanoidRootPart, 0)
-                                    end)
+                        if folder.Name:match("Raid_W4_") then
+                            local tpPaths = {
+                                folder.Core and folder.Core:FindFirstChild("TP"),
+                                folder.Start and folder.Start:FindFirstChild("TP"),
+                            }
+
+                            for _, tp in ipairs(tpPaths) do
+                                if tp then
+                                    local ti = tp:FindFirstChild("TouchInterest")
+                                    if ti then
+                                        pcall(function()
+                                            firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 0)
+                                            task.wait(0.1)
+                                            firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 1)
+                                        end)
+                                    end
                                 end
                             end
                             break
@@ -578,7 +587,7 @@ local AR = GamemodeBox:CreateToggle({
                     end
                 end
 
-                task.wait(0.5)
+                task.wait(.1)
             end
         end)
     end,
