@@ -569,7 +569,7 @@ local AR = GamemodeBox:CreateToggle({
                             if tp then
                                 for _, part in ipairs(tp:GetChildren()) do
                                     pcall(function()
-                                        firetouchinterest(part:FindFirstChildOfClass("TouchTransmitter"), LocalPlayer.Character.HumanoidRootPart, 0)
+                                        firetouchinterest(part:FindFirstChild("TouchInterest"), LocalPlayer.Character.HumanoidRootPart, 0)
                                     end)
                                 end
                             end
