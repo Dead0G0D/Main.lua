@@ -535,11 +535,54 @@ local GMF = GamemodeBox:CreateToggle({
                     task.wait(0.1)
                 end
 
-                if not foundAny then task.wait(0.5) end
+                if not foundAny then task.wait(0.1) end
             end
         end)
     end,
 }, "TOGGLE_AUTO_FARM_MODES")
+
+local autoRaid = false
+local AR = GamemodeBox:CreateToggle({
+    Name = "Auto Raid",
+    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoRaid = Value
+        if not Value then return end
+
+        task.spawn(function()
+            while autoRaid do
+                if not Modes("Pyramid Raid") then
+                    task.wait(0.5)
+                    continue
+                end
+
+                local ok, label = pcall(function()
+                    return LocalPlayer.PlayerGui.DungeonGui.Canvas.DungeonUI.Content.RoomsCleared.RoomsLabel
+                end)
+
+                if ok and label and label.Text == "Go to Next Room" then
+                    for _, folder in ipairs(workspace:GetChildren()) do
+                        if folder.Name:match("Raid_W4") then
+                            local tp = folder:FindFirstChild("Core") and folder.Core:FindFirstChild("TP")
+                            if tp then
+                                for _, part in ipairs(tp:GetChildren()) do
+                                    pcall(function()
+                                        firetouchinterest(part, LocalPlayer.Character.HumanoidRootPart, 0)
+                                    end)
+                                end
+                            end
+                            break
+                        end
+                    end
+                end
+
+                task.wait(0.5)
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_RAID")
 
 local lveasy = ""
 local Join2 = Gm:CreateInput({
