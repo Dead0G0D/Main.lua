@@ -29,33 +29,10 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = NebulaIcons:GetIcon('home', 'Symbols'), -- 89149658808007
+    Icon = NebulaIcons:GetIcon('kk', 'Material'), -- 89149658808007
     Columns = 2,
 }, "TAB_MAIN")
-
-local Modes = MS:CreateTab({
-    Name = "| Gamemodes",
-    Icon = NebulaIcons:GetIcon('castle', 'Symbols'),
-    Columns = 2,
-}, "TAB_GM")
-
-local Theme = SS:CreateTab({
-    Name = "| Themes",
-    Icon = NebulaIcons:GetIcon('iframe', 'Symbols'),
-    Columns = 2,
-}, "TAB_THEMES")
-
-local Config = SS:CreateTab({
-    Name = "| Config",
-    Icon = NebulaIcons:GetIcon('settings', 'Symbols'),
-    Columns = 2,
-}, "TAB_CONFIG")
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local VirtualUser = game:GetService("VirtualUser")
-
+               --Groupboxs--
 local AutoFarmBox = MainTab:CreateGroupbox({
     Name = "Auto Farm",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
@@ -74,17 +51,40 @@ local Up = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_UPGRADES")
 
+local Modes = MS:CreateTab({
+    Name = "| Gamemodes",
+    Icon = NebulaIcons:GetIcon('castle', 'Symbols'),
+    Columns = 2,
+}, "TAB_GM")
+              --Groupboxs--
 local GamemodeBox = Modes:CreateGroupbox({
     Name = "Auto Modes",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
-    Column = 2,
+    Column = 1,
 }, "GB_AUTOFARMMODES")
 
+local Theme = SS:CreateTab({
+    Name = "| Themes",
+    Icon = NebulaIcons:GetIcon('iframe', 'Symbols'),
+    Columns = 2,
+}, "TAB_THEMES")
+
+local Config = SS:CreateTab({
+    Name = "| Config",
+    Icon = NebulaIcons:GetIcon('settings', 'Symbols'),
+    Columns = 2,
+}, "TAB_CONFIG")
+              --Groupboxs--
 local ConfigMisc = Config:CreateGroupbox({
     Name = "Misc",
     Icon = NebulaIcons:GetIcon('shield-check', 'Phosphor'),
     Column = 1,
 }, "GB_CONFIG_MISC")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local VirtualUser = game:GetService("VirtualUser")
 
 Theme:BuildThemeGroupbox(1)
 Config:BuildConfigGroupbox(1)
@@ -431,35 +431,53 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP2")
 
-local function getTimerText(path)
-    local ok, label = pcall(function() return path end)
-    if not ok or not label then return "??" end
-    local text = label.Text
-    local time = text:match("%d+:%d+")
-    return time or "??"
-end
-
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
     Content = "Carregando...",
 }, "PARA_MODES")
 
-local function updateTimers()
-    local easyTimer = getTimerText(workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon.Easy.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
-    local mediumTimer = getTimerText(workspace.Islands.Dungeon.DungeonMAP.SurfaceDungeon.Medium.SurfaceGui.Main.DungeonSurface.DungeonTimer.TimerLabel)
+local function updateEventParagraph(paragraph, hour, min, sec)
+    local function timeToNext(minuteMarks)
+        table.sort(minuteMarks)
+        for _, mark in ipairs(minuteMarks) do
+            if min < mark or (min == mark and sec == 0) then
+                local m = mark - min
+                local s = (60 - sec) % 60
+                if s == 0 then s = 0 else m = m - 1 end
+                if m < 0 then m = m + 60 end
+                return string.format("%02d:%02d", m, s)
+            end
+        end
+        local m = 60 - min + minuteMarks[1]
+        local s = (60 - sec) % 60
+        if s == 0 then s = 0 else m = m - 1 end
+        return string.format("%02d:%02d", m, s)
+    end
 
-    -- Após abrir ainda tem 60s para iniciar
-    local content =
-        "Dungeon Easy: " .. easyTimer .. "\n" ..
-        "Dungeon Medium: " .. mediumTimer
+    local function timeToNextHour()
+        local m = 59 - min
+        local s = 59 - sec
+        return string.format("%02d:%02d", m, s)
+    end
+    
+    local easyTimer = timeToNextHour()
+    local mediumTimer = timeToNext({30})
+
+    local text =
+        "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
+        "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer
 
     timemodes:Set{Content = content}
 end
 
-task.spawn(function()
+local now = os.date("!*t")
+updateEventParagraph(infog, now.hour, now.min, now.sec)
+
+spawn(function()
     while true do
-        updateTimers()
-        task.wait(1)
+        local now = os.date("!*t")
+        updateEventParagraph(infog, now.hour, now.min, now.sec)
+        wait(1)
     end
 end)
 
