@@ -466,6 +466,7 @@ local rdcs = Pl:CreateButton({
         for codeName, codeData in pairs(CodesConfig) do
             if not codeData.Expired then
                 CodesParagraph:Set({Content = string.format("⏳ Resgatando: %s...", codeName)})
+                
                 local success = pcall(function()
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RedeemCode"):InvokeServer(codeName)
                 end)
@@ -477,6 +478,7 @@ local rdcs = Pl:CreateButton({
                     failed = failed + 1
                     CodesParagraph:Set({Content = string.format("❌ Falhou: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
                 end
+                
                 task.wait(0.5)
             else
                 expired = expired + 1
@@ -484,7 +486,7 @@ local rdcs = Pl:CreateButton({
         end
         
         local finalText = string.format(
-            "🎁 Resgate Completo!\n\n✅ Resgatados: %d\n❌ Falharam: %d\n⏭️ Expirados: %d",
+            "🎁 Resgate Completo!\n\n ✅️ Resgatados: %d , ⚠️ Falharam: %d️, ⛔️ Expirados: %d",
             redeemed, failed, expired
         )
         
