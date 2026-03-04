@@ -246,7 +246,10 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             if not hrp then break end
 
                             if selectedFarmMode == "Tp" then
+                            local dist = (hrp.Position - target.HumanoidRootPart.Position).Magnitude
+                            if dist > 3 then
                                 hrp.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2.5)
+                            end
                             elseif selectedFarmMode == "Legit" and humanoid then
                                 humanoid:MoveTo(target.HumanoidRootPart.Position + Vector3.new(0, 0, 2.7))
                             end
