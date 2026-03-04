@@ -486,7 +486,7 @@ local rdcs = Pl:CreateButton({
         end
         
         local finalText = string.format(
-            "🎁 Resgate Completo!\n\n ✅️ Resgatados: %d , ⚠️ Falharam: %d️, ⛔️ Expirados: %d",
+            "🎁 Redeemed All!\n\n✅ Redeemed: %d\n❌ Fail: %d\n⏭️ Expired: %d",
             redeemed, failed, expired
         )
         
