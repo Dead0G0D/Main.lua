@@ -443,13 +443,13 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP2")
 
-local CodesParagraph = GamemodeBox:CreateParagraph({
+local CodesParagraph = Pl:CreateParagraph({
     Name = "Codes Status",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
     Content = " Click in Redeem Codes. ",
 }, "PARA_CODES")
 
-GamemodeBox:CreateButton({
+Pl:CreateButton({
     Name = "Redeem Codes",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
     Style = 1,
