@@ -443,6 +443,41 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP2")
 
+Pl:CreateButton({
+    Name = "Redeem Codes",
+    Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
+    Style = 1,
+    Callback = function()
+        local CodesModule = require(game:GetService("ReplicatedStorage").SharedData.CodesConfig)
+        local CodesConfig = CodesModule.Codes
+        
+        local redeemed = 0
+        local failed = 0
+        
+        for codeName, codeData in pairs(CodesConfig) do
+            if not codeData.Expired then
+                local success = pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RedeemCode"):InvokeServer(codeName)
+                end)
+                
+                if success then
+                    redeemed = redeemed + 1
+                    print("✅ Código resgatado:", codeName)
+                else
+                    failed = failed + 1
+                    print("❌ Falha ao resgatar:", codeName)
+                end
+                
+                task.wait(0.5)
+            else
+                print("⏭️ Código expirado, pulando:", codeName)
+            end
+        end
+        
+        print(string.format("🎁 Total: %d resgatados | %d falharam", redeemed, failed))
+    end,
+}, "BTN_REDEEM_CODES")
+
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
     Icon = NebulaIcons:GetIcon('clock-fading', 'Lucide'),
