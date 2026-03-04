@@ -246,7 +246,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             if not hrp then break end
 
                             if selectedFarmMode == "Tp" then
-                                hrp.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0, 0, 2.5)
+                                hrp.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2.5)
                             elseif selectedFarmMode == "Legit" and humanoid then
                                 humanoid:MoveTo(target.HumanoidRootPart.Position + Vector3.new(0, 0, 2.7))
                             end
@@ -578,13 +578,13 @@ local GMF = GamemodeBox:CreateToggle({
                         if not hrp or not hrpNpc then break end
 
                         hrp.CFrame = hrpNpc.CFrame * CFrame.new(0, 0, 2.5)
-                        RunService.Heartbeat:Wait()
+                        task.wait(0.1)
                     until not npc.Parent or not h or h.Health <= 0
 
                     task.wait(0.1)
                 end
 
-                if not foundAny then task.wait(.1) end
+                if not foundAny then RunServend.Heartbeat:Wait() end
             end
         end)
     end,
