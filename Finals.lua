@@ -443,40 +443,49 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP2")
 
-Pl:CreateButton({
+local CodesParagraph = GamemodeBox:CreateParagraph({
+    Name = "Codes Status",
+    Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
+    Content = " Click in Redeem Codes. ",
+}, "PARA_CODES")
+
+GamemodeBox:CreateButton({
     Name = "Redeem Codes",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
     Style = 1,
     Callback = function()
+        CodesParagraph:Set({Content = "⏳ Iniciando resgate de códigos..."})
         local CodesModule = require(game:GetService("ReplicatedStorage").SharedData.CodesConfig)
         local CodesConfig = CodesModule.Codes
-        
         local redeemed = 0
         local failed = 0
-        
+        local expired = 0
         for codeName, codeData in pairs(CodesConfig) do
             if not codeData.Expired then
+                CodesParagraph:Set({Content = string.format("⏳ Resgatando: %s...", codeName)})
                 local success = pcall(function()
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RedeemCode"):InvokeServer(codeName)
                 end)
-                
                 if success then
                     redeemed = redeemed + 1
-                    print("✅ Código resgatado:", codeName)
+                    CodesParagraph:Set({Content = string.format("✅ Resgatado: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
                 else
                     failed = failed + 1
-                    print("❌ Falha ao resgatar:", codeName)
+                    CodesParagraph:Set({Content = string.format("❌ Falhou: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
                 end
-                
                 task.wait(0.5)
             else
-                print("⏭️ Código expirado, pulando:", codeName)
+                expired = expired + 1
             end
         end
         
-        print(string.format("🎁 Total: %d resgatados | %d falharam", redeemed, failed))
+        local finalText = string.format(
+            "🎁 Resgate Completo!\n\n✅ Resgatados: %d\n❌ Falharam: %d\n⏭️ Expirados: %d",
+            redeemed, failed, expired
+        )
+        CodesParagraph:Set({Content = finalText})
     end,
-}, "BTN_REDEEM_CODES")
+}, "BTN_REDEEM_CODES"
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
