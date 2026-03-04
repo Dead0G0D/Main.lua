@@ -578,7 +578,7 @@ local GMF = GamemodeBox:CreateToggle({
                         if not hrp or not hrpNpc then break end
 
                         hrp.CFrame = hrpNpc.CFrame * CFrame.new(0, 0, 2.5)
-                        task.wait(0.1)
+                        RunService.Heartbeat:Wait()
                     until not npc.Parent or not h or h.Health <= 0
 
                     task.wait(0.1)
