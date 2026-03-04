@@ -446,10 +446,10 @@ Pl:CreateToggle({
 local CodesParagraph = Pl:CreateParagraph({
     Name = "Codes Status",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
-    Content = " Click in Redeem Codes. ",
+    Content = "Click in Redeem Codes",
 }, "PARA_CODES")
 
-Pl:CreateButton({
+local rdcs = Pl:CreateButton({
     Name = "Redeem Codes",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
     Style = 1,
