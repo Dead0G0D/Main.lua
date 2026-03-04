@@ -455,17 +455,21 @@ local rdcs = Pl:CreateButton({
     Style = 1,
     Callback = function()
         CodesParagraph:Set({Content = "⏳ Iniciando resgate de códigos..."})
+        
         local CodesModule = require(game:GetService("ReplicatedStorage").SharedData.CodesConfig)
         local CodesConfig = CodesModule.Codes
+        
         local redeemed = 0
         local failed = 0
         local expired = 0
+        
         for codeName, codeData in pairs(CodesConfig) do
             if not codeData.Expired then
                 CodesParagraph:Set({Content = string.format("⏳ Resgatando: %s...", codeName)})
                 local success = pcall(function()
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RedeemCode"):InvokeServer(codeName)
                 end)
+                
                 if success then
                     redeemed = redeemed + 1
                     CodesParagraph:Set({Content = string.format("✅ Resgatado: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
@@ -483,9 +487,10 @@ local rdcs = Pl:CreateButton({
             "🎁 Resgate Completo!\n\n✅ Resgatados: %d\n❌ Falharam: %d\n⏭️ Expirados: %d",
             redeemed, failed, expired
         )
+        
         CodesParagraph:Set({Content = finalText})
     end,
-}, "BTN_REDEEM_CODES"
+}, "BTN_REDEEM_CODES")
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
