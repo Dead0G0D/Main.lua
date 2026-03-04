@@ -473,10 +473,10 @@ local rdcs = Pl:CreateButton({
                 
                 if success then
                     redeemed = redeemed + 1
-                    CodesParagraph:Set({Content = string.format("✅ Resgatado: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
+                    CodesParagraph:Set({Content = string.format("🎫 Successfully Redeemed: %s\n🎫 Total Successful: %d | ⚠️ Total Failed: %d", codeName, redeemed, failed)})
                 else
                     failed = failed + 1
-                    CodesParagraph:Set({Content = string.format("❌ Falhou: %s\n\n✅ Total: %d | ❌ Falhou: %d", codeName, redeemed, failed)})
+                    CodesParagraph:Set({Content = string.format("⚠️ Failed Attempt: %s\n🎫 Total Successful: %d | ⚠️ Total Failed: %d", codeName, redeemed, failed)})
                 end
                 
                 task.wait(0.5)
