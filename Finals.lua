@@ -583,7 +583,7 @@ local GMF = GamemodeBox:CreateToggle({
                         hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                         if not hrp or not hrpNpc then break end
 
-                        hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
+                        hrp.CFrame = hrpNpc.CFrame * CFrame.new(0, 0, 2.5)
                         task.wait(0.1)
                     until not npc.Parent or not h or h.Health <= 0
 
