@@ -522,7 +522,7 @@ local function updateEventParagraph(paragraph, hour, min, sec)
     end
     
     local easyTimer = timeToNextHour()
-    local mediumTimer = timeToNext({15})
+    local mediumTimer = timeToNext({30, 15})
 
     local text =
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
