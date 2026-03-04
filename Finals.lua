@@ -453,6 +453,7 @@ local rdcs = Pl:CreateButton({
     Name = "Redeem Codes",
     Icon = NebulaIcons:GetIcon('ticket', 'Lucide'),
     Style = 1,
+    CenterContent = true,
     Callback = function()
         CodesParagraph:Set({Content = "⏳ Iniciando resgate de códigos..."})
         
