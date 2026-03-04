@@ -515,18 +515,12 @@ local function updateEventParagraph(paragraph, hour, min, sec)
         return string.format("%02d:%02d", m, s)
     end
 
-    local function timeToNextHour()
-        local m = 59 - min
-        local s = 59 - sec
-        return string.format("%02d:%02d", m, s)
-    end
-    
-    local easyTimer = timeToNextHour()
-    local mediumTimer = timeToNext({30, 15})
+    local easyTimer = timeToNext({0, 30})
+    local mediumTimer = timeToNext({15, 45})
 
     local text =
-        "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
-        "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer
+        "Dungeon Easy Open: XX:00 & XX:30\nNext In: " .. easyTimer .. "\n" ..
+        "Dungeon Medium Open: XX:15 & XX:45\nNext In: " .. mediumTimer
 
     paragraph:Set({Content = text})
 end
