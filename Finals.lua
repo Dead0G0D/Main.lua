@@ -584,7 +584,7 @@ local GMF = GamemodeBox:CreateToggle({
                     task.wait(0.1)
                 end
 
-                if not foundAny then RunServend.Heartbeat:Wait() end
+                if not foundAny then RunService.Heartbeat:Wait() end
             end
         end)
     end,
