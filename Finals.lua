@@ -569,18 +569,21 @@ local GMF = GamemodeBox:CreateToggle({
                     local char = LocalPlayer.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-                    repeat
-                        if not modeFarm or not npc.Parent then break end
-                        if not AnyModeActive() then break end
-                        if not h or h.Health <= 0 then break end
+                  repeat
+                      if not modeFarm or not npc.Parent then break end
+                      if not AnyModeActive() then break end
+                      if not h or h.Health <= 0 then break end
 
-                        hrpNpc = npc:FindFirstChild("HumanoidRootPart")
-                        if not hrp or not hrpNpc then break end
+                      hrpNpc = npc:FindFirstChild("HumanoidRootPart")
+                      if not hrp or not hrpNpc then break end
 
-                        hrp.CFrame = hrpNpc.CFrame * CFrame.new(0, 0, 2.5)
-                        task.wait(0.1)
-                    until not npc.Parent or not h or h.Health <= 0
+                      local dist = (hrp.Position - hrpNpc.Position).Magnitude
+                      if dist > 3 then
+                      hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
+                      end
 
+                      RunService.Heartbeat:Wait()
+                  until not npc.Parent or not h or h.Health <= 0
                     task.wait(0.1)
                 end
 
