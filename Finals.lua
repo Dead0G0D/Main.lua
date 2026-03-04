@@ -521,8 +521,8 @@ local function updateEventParagraph(paragraph, hour, min, sec)
         return string.format("%02d:%02d", m, s)
     end
     
-    local easyTimer = timeToNextHour()
-    local mediumTimer = timeToNext({30})
+    local easyTimer = timeToNextHour() and timeToNext(30)
+    local mediumTimer = timeToNext({15}) and timeToNext(45)
 
     local text =
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
