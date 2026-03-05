@@ -613,7 +613,7 @@ GamemodeBox:CreateToggle({
 
         task.spawn(function()
             while autoRaid do
-                if not Modes("Raid Pyramid") then
+                if not Modes("Pyramid Raid") then
                     task.wait(0.5)
                     continue
                 end
@@ -634,32 +634,14 @@ GamemodeBox:CreateToggle({
 
                             for _, tp in ipairs(tpPaths) do
                                 if tp then
-                                    print("[AutoRaid] Achou TP:", tp:GetFullName())
-
-                                    local ti = tp:FindFirstChild("TouchInterest")
-                                    if ti then
-                                        print("[AutoRaid] Achou TouchInterest em:", tp:GetFullName())
-                                        pcall(function()
-                                            firetouchinterest(ti, LocalPlayer.Character.HumanoidRootPart, 0)
-                                            task.wait(0.1)
-                                            firetouchinterest(ti, LocalPlayer.Character.HumanoidRootPart, 1)
-                                        end)
-                                    else
-                                        print("[AutoRaid] SEM TouchInterest em:", tp:GetFullName())
-                                        for _, child in ipairs(tp:GetChildren()) do
-                                            print("[AutoRaid] filho:", child.Name, child.ClassName)
-                                        end
-                                    end
+                                    print("[AutoRaid] Tentando fire em:", tp:GetFullName())
+                                    pcall(function()
+                                        firetouchtransmitter(tp, LocalPlayer.Character.HumanoidRootPart, 0)
+                                    end)
                                 end
                             end
                             break
                         end
-                    end
-                else
-                    if ok and label then
-                        print("[AutoRaid] RoomsLabel text:", label.Text)
-                    else
-                        print("[AutoRaid] Nao achou RoomsLabel")
                     end
                 end
 
