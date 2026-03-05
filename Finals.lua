@@ -169,6 +169,7 @@ local Atc = AutoFarmBox:CreateToggle({
 
 local farmRunning = false
 local selectedNpcNames = {}
+local priorityEnemyNames = {}
 local selectedFarmMode = "Tp"
 
 local function GetUniqueNpcNames()
@@ -217,7 +218,17 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                     continue
                 end
 
-                for _, npcName in ipairs(selectedNpcNames) do
+                local orderedNames = {}
+                for _, name in ipairs(priorityEnemyNames) do
+                    table.insert(orderedNames, name)
+                end
+                for _, name in ipairs(selectedNpcNames) do
+                    if not table.find(orderedNames, name) then
+                        table.insert(orderedNames, name)
+                    end
+                end
+
+                for _, npcName in ipairs(orderedNames) do
                     if not farmRunning then break end
 
                     local target = nil
@@ -245,7 +256,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                     if target then
                         repeat
                             if not farmRunning or not target.Parent then break end
-                            if not table.find(selectedNpcNames, npcName) then break end
+                            if not table.find(orderedNames, npcName) then break end
 
                             char = LocalPlayer.Character
                             hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -261,7 +272,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             elseif selectedFarmMode == "Legit" and humanoid then
                                 humanoid:MoveTo(pivot.Position + Vector3.new(0, 0, 2.7))
                             end
-                            
+
                             RunService.Heartbeat:Wait()
                         until not target.Parent
                     end
@@ -283,6 +294,15 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
     end,
 }, "DD_NPC_SELECT")
 
+local PriorityDropdown = NpcAutoFarm:AddDropdown({
+    Options = npcnames,
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Callback = function(Options)
+        priorityEnemyNames = Options
+    end,
+}, "DD_PRIORITY_NPCS")
+
 AutoFarmBox:CreateButton({
     Name = "Refresh",
     Icon = NebulaIcons:GetIcon('caret-circle-right', 'Phosphor'),
@@ -291,6 +311,7 @@ AutoFarmBox:CreateButton({
     Callback = function()
         npcnames = GetUniqueNpcNames()    
         NpcDropdown:Set({Options = npcnames})
+        PriorityDropdown:Set({Options = npcnames})
     end,
 }, "BTN_REFRESH_NPCS")
 
