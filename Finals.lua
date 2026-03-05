@@ -24,9 +24,9 @@ local Window = Starlight:CreateWindow({
     },
 })
 
-local MS = Window:CreateTabSection("--MAIN--")
-local PL = Window:CreateTabSection("--PLAYER/MISC--")
-local SS = Window:CreateTabSection("--SETTINGS--")
+local MS = Window:CreateTabSection("   --MAIN--")
+local PL = Window:CreateTabSection("   --PLAYER/MISC--")
+local SS = Window:CreateTabSection("   --SETTINGS--")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
