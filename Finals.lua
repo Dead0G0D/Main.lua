@@ -311,7 +311,7 @@ AutoFarmBox:CreateButton({
     CenterContent = true,
     Callback = function()
         local names = GetUniqueNpcNames()
-        NpcDropdown:Set({Options = names)
+        NpcDropdown:Set({Options = names})
         PriorityDropdown:Set({Options = names})
     end,
 }, "BTN_REFRESH_NPCS")
