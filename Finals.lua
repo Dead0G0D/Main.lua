@@ -285,15 +285,25 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
 }, "TOGGLE_NPC_AUTO_FARM")
 
 local NpcDropdown = NpcAutoFarm:AddDropdown({
-    Options = GetUniqueNpcNames(),
+    Options = GetUniqueNpcNames()
     CurrentOptions = {},
     Placeholder = "Select",
     MultipleOptions = true,
     Callback = function(Options)
         selectedNpcNames = Options
-        PriorityDropdown:Set({Options = npcnames})
     end,
 }, "DD_NPC_SELECT")
+
+AutoFarmBox:CreateButton({
+    Name = "Refresh",
+    Icon = NebulaIcons:GetIcon('caret-circle-right', 'Phosphor'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        npcnames = GetUniqueNpcNames()    
+        NpcDropdown:Set({Options = npcnames})
+    end,
+}, "BTN_REFRESH_NPCS2")
 
 local Label = AutoFarmBox:CreateLabel({
     Name = "Priority Farm",
@@ -309,15 +319,15 @@ local PriorityDropdown = Label:AddDropdown({
 }, "DD_PRIORITY_NPCS")
 
 AutoFarmBox:CreateButton({
-    Name = "Refresh",
+    Name = "Refresh Priority",
     Icon = NebulaIcons:GetIcon('caret-circle-right', 'Phosphor'),
     Style = 1,
     CenterContent = true,
     Callback = function()
         npcnames = GetUniqueNpcNames()    
-        NpcDropdown:Set({Options = npcnames})
+        PriorityDropdown:Set({Options = npcnames})
     end,
-}, "BTN_REFRESH_NPCS")
+}, "BTN_REFRESH_NPCS1")
 
 local islands = (function()
     local list = {}
