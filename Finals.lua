@@ -24,9 +24,9 @@ local Window = Starlight:CreateWindow({
     },
 })
 
-local MS = Window:CreateTabSection("MAIN")
-local PL = Window:CreateTabSection("PLAYER/MISC")
-local SS = Window:CreateTabSection("SETTINGS")
+local MS = Window:CreateTabSection("--MAIN--")
+local PL = Window:CreateTabSection("--PLAYER/MISC--")
+local SS = Window:CreateTabSection("--SETTINGS--")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
@@ -60,7 +60,7 @@ local Up = MainTab:CreateGroupbox({
 
 local Modes = MS:CreateTab({
     Name = "| Gamemodes",
-    Icon = NebulaIcons:GetIcon('castle', 'Symbols'),
+    Icon = 77630928106024,
     Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
@@ -352,7 +352,7 @@ local pro = (function()
     return list
 end)()
 
-local spt = ""
+local spt = {}
 local autoupg = false
 Up:CreateDivider()
 local autoprott1 = Up:CreateToggle({
@@ -383,7 +383,7 @@ autoprott1:AddDropdown({
     end,
 }, "DD_UPGRADES_SELECT1")
 
-local spt2 = ""
+local spt2 = {}
 local autopro = false
 Up:CreateDivider()
 local autoprott2 = Up:CreateToggle({
