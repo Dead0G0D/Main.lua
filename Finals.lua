@@ -814,6 +814,8 @@ GamemodeBox:CreateToggle({
 }, "TOGGLE_AUTO_RAID")
 
 local SvPosition = nil
+local SvIsland = "Unknown"
+
 local PositionParagraph = SV:CreateParagraph({
     Name = "Saved Position",
     Icon = NebulaIcons:GetIcon('map-pinned', 'Lucide'),
@@ -830,7 +832,17 @@ local svp = SV:CreateButton({
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
             SvPosition = hrp.Position
-            PositionParagraph.Instance.Content.Text = string.format("X: %.2f, Y: %.2f, Z: %.2f", SvPosition.X, SvPosition.Y, SvPosition.Z)
+            for _, npc in ipairs(workspace.Enemies:GetChildren()) do
+                local island = npc:GetAttribute("IslandName")
+                if island then
+                    SvIsland = island
+                    break
+                end
+            end
+            PositionParagraph.Instance.Content.Text = string.format(
+                "Island: %s\nX: %.2f, Y: %.2f, Z: %.2f",
+                SvIsland, SvPosition.X, SvPosition.Y, SvPosition.Z
+            )
         end
     end,
 }, "BTN_SAVE_POS")
