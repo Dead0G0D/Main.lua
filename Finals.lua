@@ -291,8 +291,22 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
     MultipleOptions = true,
     Callback = function(Options)
         selectedNpcNames = Options
+        PriorityDropdown:Set({Options = Options, CurrentOptions = {}})
     end,
 }, "DD_NPC_SELECT")
+
+local PriorityLabel = AutoFarmBox:CreateLabel({
+    Name = "Priority Farm",
+}, "LABEL_PRIORITY")
+
+local PriorityDropdown = PriorityLabel:AddDropdown({
+    Options = {},
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Callback = function(Options)
+        priorityEnemyNames = Options
+    end,
+}, "DD_PRIORITY_NPCS")
 
 AutoFarmBox:CreateButton({
     Name = "Refresh",
@@ -300,8 +314,8 @@ AutoFarmBox:CreateButton({
     Style = 1,
     CenterContent = true,
     Callback = function()
-        npcnames = GetUniqueNpcNames()    
-        NpcDropdown:Set({Options = npcnames})
+        local names = GetUniqueNpcNames()
+        NpcDropdown:Set({Options = names, CurrentOptions = {}})
     end,
 }, "BTN_REFRESH_NPCS")
 
