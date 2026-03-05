@@ -25,12 +25,13 @@ local Window = Starlight:CreateWindow({
 })
 
 local MS = Window:CreateTabSection("MAIN")
+local PL = Window:CreateTabSection("PLAYER/MISC")
 local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
     Icon = 77630928106024,
-    Columns = 2,
+    Columns = 1,
 }, "TAB_MAIN")
                --Groupboxs--
 local AutoFarmBox = MainTab:CreateGroupbox({
@@ -39,11 +40,17 @@ local AutoFarmBox = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_AUTOFARM")
 
-local Pl = MainTab:CreateGroupbox({
+local PlayerTab = PL:CreateTab({
+    Name = "| Player/Misc",
+    Icon = 77630928106024,
+    Columns = 1,
+}, "TAB_PLAYER")
+
+local Pl = PlayerTab:CreateGroupbox({
     Name = "Player",
     Icon = NebulaIcons:GetIcon('trending_up', 'Material'),
     Column = 1,
-}, "GB_STATS")
+}, "GB_PLMISC")
 
 local Up = MainTab:CreateGroupbox({
     Name = "Player Upgrades",
@@ -54,7 +61,7 @@ local Up = MainTab:CreateGroupbox({
 local Modes = MS:CreateTab({
     Name = "| Gamemodes",
     Icon = NebulaIcons:GetIcon('castle', 'Symbols'),
-    Columns = 2,
+    Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
 local GamemodeBox = Modes:CreateGroupbox({
@@ -345,7 +352,7 @@ local pro = (function()
     return list
 end)()
 
-local spt = UpOptions[1] or ""
+local spt = ""
 local autoupg = false
 Up:CreateDivider()
 local autoprott1 = Up:CreateToggle({
@@ -369,13 +376,14 @@ local autoprott1 = Up:CreateToggle({
 
 autoprott1:AddDropdown({
     Options = UpOptions,
-    CurrentOptions = {UpOptions[1]},
+    CurrentOptions = {},
+    MultipleOptions = true,
     Callback = function(Options)
-        spt = Options[1]
+        spt = Options
     end,
 }, "DD_UPGRADES_SELECT1")
 
-local spt2 = pro[1] or ""
+local spt2 = ""
 local autopro = false
 Up:CreateDivider()
 local autoprott2 = Up:CreateToggle({
@@ -399,9 +407,10 @@ local autoprott2 = Up:CreateToggle({
 
 autoprott2:AddDropdown({
     Options = pro,
-    CurrentOptions = {pro[1]},
+    CurrentOptions = {},
+    MultipleOptions = true,
     Callback = function(Options)
-        spt2 = Options[1]
+        spt2 = Options
     end,
 }, "DD_UPGRADES_SELECT2")
 
@@ -446,6 +455,68 @@ Pl:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_EQUIP2")
+
+local autoPresents = false
+
+Pl:CreateToggle({
+    Name = "Auto Collect Presents",
+    Icon = NebulaIcons:GetIcon('gift', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoPresents = Value
+        if not Value then return end
+
+        task.spawn(function()
+            while autoPresents do
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then
+                    task.wait(0.5)
+                    continue
+                end
+
+                local savedPos = hrp.CFrame
+                local collected = false
+
+                local presentFolders = {
+                    workspace.Presents:FindFirstChild("Group"),
+                    workspace.Presents:FindFirstChild("Daily"),
+                }
+
+                for _, folder in ipairs(presentFolders) do
+                    if not folder then continue end
+
+                    local timer = folder:FindFirstChild("BillboardGui", true)
+                        and folder:FindFirstPath("BillboardGui.GiftFrame.GiftTimer")
+
+                    -- busca o GiftTimer em cada present do folder
+                    for _, present in ipairs(folder:GetChildren()) do
+                        if not autoPresents then break end
+
+                        local giftTimer = present:FindFirstChild("BillboardGui")
+                            and present.BillboardGui:FindFirstChild("GiftFrame")
+                            and present.BillboardGui.GiftFrame:FindFirstChild("GiftTimer")
+
+                        if giftTimer and giftTimer.ContentText == "Claim!" then
+                            if not AnyModeActive() then
+                                hrp.CFrame = present:GetPivot()
+                                collected = true
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+
+                if collected then
+                    task.wait(0.3)
+                    hrp.CFrame = savedPos
+                end
+
+                task.wait(1)
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_PRESENTS")
 
 local CodesParagraph = Pl:CreateParagraph({
     Name = "Codes Status",
@@ -603,7 +674,7 @@ local GMF = GamemodeBox:CreateToggle({
 local autoRaid = false
 
 GamemodeBox:CreateToggle({
-    Name = "Auto Raid",
+    Name = "Auto Next Room Raid",
     Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
     CurrentValue = false,
     Style = 2,
@@ -623,22 +694,27 @@ GamemodeBox:CreateToggle({
                 end)
 
                 if ok and label and label.Text == "Go to Next Room" then
-                    for _, folder in ipairs(workspace:GetChildren()) do
-                        if folder.Name:match("Raid_W4") then
-                            local tpPaths = {
-                                folder.Core and folder.Core:FindFirstChild("TP"),
-                                folder.Start and folder.Start:FindFirstChild("TP"),
-                            }
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        for _, folder in ipairs(workspace:GetChildren()) do
+                            if folder.Name:match("Raid_W4") then
+                                local startTp = folder.Start and folder.Start:FindFirstChild("TP")
+                                local coreTp = folder.Core and folder.Core:FindFirstChild("TP")
 
-                            for _, tp in ipairs(tpPaths) do
-                                if tp then
-                                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                                    if hrp then
-                                        hrp.CFrame = tp.CFrame
-                                    end
+                                local tp = nil
+
+                                if coreTp and coreTp:GetAttribute("Teleporting") == true then
+                                    tp = coreTp
+                                elseif startTp and startTp:GetAttribute("Enabled") == true then
+                                    tp = startTp
                                 end
+
+                                if tp then
+                                    hrp.CFrame = tp.CFrame
+                                end
+
+                                break
                             end
-                            break
                         end
                     end
                 end
