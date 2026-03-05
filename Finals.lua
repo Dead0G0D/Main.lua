@@ -24,9 +24,9 @@ local Window = Starlight:CreateWindow({
     },
 })
 
-local MS = Window:CreateTabSection("   --MAIN--")
-local PL = Window:CreateTabSection("   --PLAYER/MISC--")
-local SS = Window:CreateTabSection("   --SETTINGS--")
+local MS = Window:CreateTabSection("--MAIN--")
+local PL = Window:CreateTabSection("--PLAYER/MISC--")
+local SS = Window:CreateTabSection("--SETTINGS--")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
@@ -414,6 +414,72 @@ autoprott2:AddDropdown({
     end,
 }, "DD_UPGRADES_SELECT2")
 
+local spt = {}
+local autoupg = false
+Up:CreateDivider()
+local autoprott1 = Up:CreateToggle({
+    Name = "Auto Roll",
+    Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoupg = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoupg do
+                for _, option in ipairs(spt) do
+                    if not autoupg then break end
+                    pcall(function() game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestPowerRoll"):InvokeServer(option) end)
+                    RunService.Heartbeat:Wait()
+                end
+                if #spt == 0 then task.wait(.1) end
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_ROLL1")
+
+autoprott1:AddDropdown({
+    Options = UpOptions,
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Callback = function(Options)
+        spt = Options
+    end,
+}, "DD_UPGRADES_SELECT1")
+
+local spt2 = {}
+local autopro = false
+Up:CreateDivider()
+local autoprott2 = Up:CreateToggle({
+    Name = "Auto Progression",
+    Icon = NebulaIcons:GetIcon('chart-line-up', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autopro = Value
+        if not Value then return end
+        task.spawn(function()
+            while autopro do
+                for _, option in ipairs(spt2) do
+                    if not autopro then break end
+                    pcall(function() game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestProgressionUpgrade"):InvokeServer(option) end)
+                    RunService.Heartbeat:Wait()
+                end
+                if #spt2 == 0 then task.wait(.1) end
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_UP")
+
+autoprott2:AddDropdown({
+    Options = pro,
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Callback = function(Options)
+        spt2 = Options
+    end,
+}, "DD_UPGRADES_SELECT2")
+
 local autoEquip = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Avatar",
@@ -610,7 +676,7 @@ task.spawn(function()
         task.wait(1)
     end
 end)
-
+GamemodeBox:CreateDivider()
 local modeFarm = false
 local GMF = GamemodeBox:CreateToggle({
     Name = "Auto Farm Modes",
