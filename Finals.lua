@@ -291,6 +291,7 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
     MultipleOptions = true,
     Callback = function(Options)
         selectedNpcNames = Options
+        PriorityDropdown:Set({Options = npcnames})
     end,
 }, "DD_NPC_SELECT")
 
@@ -315,7 +316,6 @@ AutoFarmBox:CreateButton({
     Callback = function()
         npcnames = GetUniqueNpcNames()    
         NpcDropdown:Set({Options = npcnames})
-        PriorityDropdown:Set({Options = npcnames})
     end,
 }, "BTN_REFRESH_NPCS")
 
