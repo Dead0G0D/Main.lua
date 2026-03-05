@@ -245,15 +245,16 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             humanoid = char and char:FindFirstChild("Humanoid")
                             if not hrp then break end
 
-                            if selectedFarmMode == "Tp" then
-                            local dist = (hrp.Position - target.Position).Magnitude
-                            if dist > 3 then
-                                hrp.CFrame = target.CFrame * CFrame.new(0, 0, 2.5)
-                            end
-                            elseif selectedFarmMode == "Legit" and humanoid then
-                                humanoid:MoveTo(target.HumanoidRootPart.Position + Vector3.new(0, 0, 2.7))
-                            end
+                            local pivot = target:GetPivot()
 
+                            if selectedFarmMode == "Tp" then
+                                if (hrp.Position - pivot.Position).Magnitude > 3 then
+                                    hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
+                                end
+                            elseif selectedFarmMode == "Legit" and humanoid then
+                                humanoid:MoveTo(pivot.Position + Vector3.new(0, 0, 2.7))
+                            end
+                            
                             RunService.Heartbeat:Wait()
                         until not target.Parent
                     end
