@@ -581,11 +581,11 @@ local GMF = GamemodeBox:CreateToggle({
                       hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                       if not hrp or not hrpNpc then break end
 
-                      local dist = (hrp.Position - hrpNpc.Position).Magnitude
-                      if dist > 3 then
-                      hrp.CFrame = hrpNpc.CFrame + Vector3.new(0, 0, 2.5)
-                      end
+                      local pivot = npc:GetPivot()
 
+                      if (hrp.Position - pivot.Position).Magnitude > 3 then
+                          hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
+                      end
                       RunService.Heartbeat:Wait()
                   until not npc.Parent or not h or h.Health <= 0
                     task.wait(0.1)
@@ -637,9 +637,9 @@ GamemodeBox:CreateToggle({
                                     if ti then
                                         print("[AutoRaid] Achou TouchInterest em:", tp:GetFullName())
                                         pcall(function()
-                                            firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 0)
+                                            firetouchinterest(ti, LocalPlayer.Character.HumanoidRootPart, 0)
                                             task.wait(0.1)
-                                            firetouchtransmitter(ti, LocalPlayer.Character.HumanoidRootPart, 1)
+                                            firetouchinterest(ti, LocalPlayer.Character.HumanoidRootPart, 1)
                                         end)
                                     else
                                         print("[AutoRaid] SEM TouchInterest em:", tp:GetFullName())
