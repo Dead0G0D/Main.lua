@@ -248,7 +248,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             local pivot = target:GetPivot()
 
                             if selectedFarmMode == "Tp" then
-                                if (hrp.Position - pivot.Position).Magnitude > 3 then
+                                if (hrp.Position - pivot.Position).Magnitude > 10 then
                                     hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
                                 end
                             elseif selectedFarmMode == "Legit" and humanoid then
@@ -585,7 +585,7 @@ local GMF = GamemodeBox:CreateToggle({
                   
                       local pivot = npc:GetPivot()
                   
-                      if (hrp.Position - pivot.Position).Magnitude > 3 then
+                      if (hrp.Position - pivot.Position).Magnitude > 10 then
                           hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
                       end
                   
@@ -625,8 +625,6 @@ GamemodeBox:CreateToggle({
                 if ok and label and label.Text == "Go to Next Room" then
                     for _, folder in ipairs(workspace:GetChildren()) do
                         if folder.Name:match("Raid_W4") then
-                            print("[AutoRaid] Achou pasta:", folder.Name)
-
                             local tpPaths = {
                                 folder.Core and folder.Core:FindFirstChild("TP"),
                                 folder.Start and folder.Start:FindFirstChild("TP"),
@@ -634,10 +632,10 @@ GamemodeBox:CreateToggle({
 
                             for _, tp in ipairs(tpPaths) do
                                 if tp then
-                                    print("[AutoRaid] Tentando fire em:", tp:GetFullName())
-                                    pcall(function()
-                                        firetouchtransmitter(tp, LocalPlayer.Character.HumanoidRootPart, 0)
-                                    end)
+                                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                    if hrp then
+                                        hrp.CFrame = tp.CFrame
+                                    end
                                 end
                             end
                             break
