@@ -294,7 +294,7 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
     end,
 }, "DD_NPC_SELECT")
 
-local PriorityDropdown = NpcAutoFarm:AddDropdown({
+local PriorityDropdown = AutoFarmBox:AddDropdown({
     Options = npcnames,
     CurrentOptions = {},
     MultipleOptions = true,
