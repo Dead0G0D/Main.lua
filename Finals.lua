@@ -577,15 +577,18 @@ local GMF = GamemodeBox:CreateToggle({
                       if not modeFarm or not npc.Parent then break end
                       if not AnyModeActive() then break end
                       if not h or h.Health <= 0 then break end
-
+                  
+                      local char = LocalPlayer.Character
+                      hrp = char and char:FindFirstChild("HumanoidRootPart")
                       hrpNpc = npc:FindFirstChild("HumanoidRootPart")
                       if not hrp or not hrpNpc then break end
-
+                  
                       local pivot = npc:GetPivot()
-
+                  
                       if (hrp.Position - pivot.Position).Magnitude > 3 then
                           hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
                       end
+                  
                       RunService.Heartbeat:Wait()
                   until not npc.Parent or not h or h.Health <= 0
                     task.wait(0.1)
