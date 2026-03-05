@@ -287,20 +287,17 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
     CurrentOptions = {},
-    Placeholder = "Select",
+    Placeholder = "Select NPCs",
     MultipleOptions = true,
     Callback = function(Options)
         selectedNpcNames = Options
     end,
 }, "DD_NPC_SELECT")
 
-local PriorityLabel = AutoFarmBox:CreateLabel({
-    Name = "Priority Farm",
-}, "LABEL_PRIORITY")
-
-local PriorityDropdown = PriorityLabel:AddDropdown({
+local PriorityDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
     CurrentOptions = {},
+    Placeholder = "Priority NPCs",
     MultipleOptions = true,
     Callback = function(Options)
         priorityEnemyNames = Options
