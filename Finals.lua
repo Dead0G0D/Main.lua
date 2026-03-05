@@ -248,7 +248,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             local pivot = target:GetPivot()
 
                             if selectedFarmMode == "Tp" then
-                                if (hrp.Position - pivot.Position).Magnitude > 10 then
+                                if (hrp.Position - pivot.Position).Magnitude > 6 then
                                     hrp.CFrame = CFrame.lookAt((pivot * CFrame.new(0, 0, 2.5)).Position, pivot.Position)
                                 end
                             elseif selectedFarmMode == "Legit" and humanoid then
