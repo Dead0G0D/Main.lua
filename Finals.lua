@@ -5,10 +5,10 @@ local device = "Unknown"
 local UIS = game:GetService("UserInputService")
 
 if UIS.TouchEnabled and not UIS.KeyboardEnabled then
-    device = "Mobile"
+    device = " is Mobile"
     print("Device:", device)
 else
-    device = "PC"
+    device = " is PC"
     print("Device:", device)
 end
 
@@ -21,8 +21,8 @@ ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
 GameName = ProductInfo.Name
 
 local Window = Starlight:CreateWindow({
-    Name = "Ihave in -".. device,
-    Subtitle = GameName,
+    Name = "idkhub",
+    Subtitle = GameName .. device,
     Icon = "114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 800),
     BuildWarnings = true,
@@ -41,7 +41,7 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = "115111586638831", --77630928106024,
+    Icon = "114022464350371", --115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_MAIN")
                --Groupboxs--
@@ -53,7 +53,7 @@ local AutoFarmBox = MainTab:CreateGroupbox({
 
 local PlayerTab = PL:CreateTab({
     Name = "| Player/Misc",
-    Icon = "115111586638831", --77630928106024,
+    Icon = "114022464350371", --"115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_PLAYER")
 
@@ -71,7 +71,7 @@ local Up = MainTab:CreateGroupbox({
 
 local Modes = MS:CreateTab({
     Name = "| Gamemodes",
-    Icon = "115111586638831", --77630928106024,
+    Icon = "114022464350371", --"115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
