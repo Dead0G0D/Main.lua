@@ -42,7 +42,7 @@ local AutoFarmBox = MainTab:CreateGroupbox({
 
 local PlayerTab = PL:CreateTab({
     Name = "| Player/Misc",
-    Icon = "115111586638831" --77630928106024,
+    Icon = "115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_PLAYER")
 
