@@ -396,46 +396,6 @@ local autoprott1 = Up:CreateToggle({
     end,
 }, "TOGGLE_AUTO_ROLL1")
 
-autoprott1:AddDropdown({
-    Options = UpOptions,
-    CurrentOptions = {},
-    MultipleOptions = true,
-    Callback = function(Options)
-        spt = Options
-    end,
-}, "DD_UPGRADES_SELECT1")
-
-local spt2 = {}
-local autopro = false
-Up:CreateDivider()
-local autoprott2 = Up:CreateToggle({
-    Name = "Auto Progression",
-    Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
-    CurrentValue = false,
-    Style = 2,
-    Callback = function(Value)
-        autopro = Value
-        if not Value then return end
-        task.spawn(function()
-            while autopro do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestProgressionUpgrade"):InvokeServer(spt2)
-                end)
-                RunService.Heartbeat:Wait()
-            end
-        end)
-    end,
-}, "TOGGLE_AUTO_UP")
-
-autoprott2:AddDropdown({
-    Options = pro,
-    CurrentOptions = {},
-    MultipleOptions = true,
-    Callback = function(Options)
-        spt2 = Options
-    end,
-}, "DD_UPGRADES_SELECT2")
-
 local spt = {}
 local autoupg = false
 Up:CreateDivider()
