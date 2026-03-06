@@ -486,62 +486,54 @@ local autoPresents = false
 
 Pl:CreateToggle({
     Name = "Auto Collect Presents",
-    Icon = NebulaIcons:GetIcon('gift', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('gift','Phosphor'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
         autoPresents = Value
-        if not Value then return end
 
-        task.spawn(function()
-            while autoPresents do
-                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if not hrp then
-                    task.wait(0.5)
-                    continue
-                end
+        if Value then
+            task.spawn(function()
+                while autoPresents do
+                    local char = LocalPlayer.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-                local savedPos = hrp.CFrame
-                local collected = false
+                    if not hrp then
+                        task.wait(0.5)
+                        continue
+                    end
 
-                local presentFolders = {
-                    workspace.Presents:FindFirstChild("Group"),
-                    workspace.Presents:FindFirstChild("Daily"),
-                }
+                    local savedPos = hrp.CFrame
+                    local collected = false
 
-                for _, folder in ipairs(presentFolders) do
-                    if not folder then continue end
-
-                    local timer = folder:FindFirstChild("BillboardGui", true)
-                        and folder:FindFirstPath("BillboardGui.GiftFrame.GiftTimer")
-
-                    -- busca o GiftTimer em cada present do folder
-                    for _, present in ipairs(folder:GetChildren()) do
+                    for _,obj in ipairs(workspace.Presents:GetDescendants()) do
                         if not autoPresents then break end
 
-                        local giftTimer = present:FindFirstChild("BillboardGui")
-                            and present.BillboardGui:FindFirstChild("GiftFrame")
-                            and present.BillboardGui.GiftFrame:FindFirstChild("GiftTimer")
+                        if obj.Name == "GiftTimer" and obj:IsA("TextLabel") then
+                            if obj.ContentText == "Claim!" then
+                                local present = obj:FindFirstAncestorWhichIsA("Model") or obj.Parent.Parent.Parent
 
-                        if giftTimer and giftTimer.ContentText == "Claim!" then
-                            if not AnyModeActive() then
-                                hrp.CFrame = present:GetPivot()
-                                collected = true
-                                task.wait(0.3)
+                                if present and present:IsDescendantOf(workspace.Presents) then
+                                    if not AnyModeActive() then
+                                        hrp.CFrame = present:GetPivot()
+                                        collected = true
+                                        task.wait(0.25)
+                                    end
+                                end
                             end
                         end
                     end
-                end
 
-                if collected then
-                    task.wait(0.3)
-                    hrp.CFrame = savedPos
-                end
+                    if collected then
+                        task.wait(0.2)
+                        hrp.CFrame = savedPos
+                    end
 
-                task.wait(1)
-            end
-        end)
-    end,
+                    task.wait(0.8)
+                end
+            end)
+        end
+    end
 }, "TOGGLE_AUTO_PRESENTS")
 
 local CodesParagraph = Pl:CreateParagraph({
