@@ -387,28 +387,6 @@ local autoprott1 = Up:CreateToggle({
         if not Value then return end
         task.spawn(function()
             while autoupg do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestPowerRoll"):InvokeServer(spt)
-                end)
-                RunService.Heartbeat:Wait()
-            end
-        end)
-    end,
-}, "TOGGLE_AUTO_ROLL1")
-
-local spt = {}
-local autoupg = false
-Up:CreateDivider()
-local autoprott1 = Up:CreateToggle({
-    Name = "Auto Roll",
-    Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
-    CurrentValue = false,
-    Style = 2,
-    Callback = function(Value)
-        autoupg = Value
-        if not Value then return end
-        task.spawn(function()
-            while autoupg do
                 for _, option in ipairs(spt) do
                     if not autoupg then break end
                     pcall(function() game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestPowerRoll"):InvokeServer(option) end)
@@ -732,7 +710,7 @@ GamemodeBox:CreateToggle({
 
         task.spawn(function()
             while autoRaid do
-                if not Modes("Pyramid Raid") then
+                if not Modes("Raid Pyramid") then
                     task.wait(0.5)
                     continue
                 end
@@ -773,6 +751,14 @@ GamemodeBox:CreateToggle({
     end,
 }, "TOGGLE_AUTO_RAID")
 
+local lveasy = ""
+local lvmedium = ""
+local lvraid = ""
+local selectedMap = ""
+local hasJustTeleported = false
+local lastJoinEasy, lastJoinMedium, lastJoinRaid = 0, 0, 0
+local autoJoinEasy, autoJoinMedium, autoJoinRaid = false, false, false
+
 local SvPosition = nil
 local PositionParagraph = SV:CreateParagraph({
     Name = "Saved Position",
@@ -795,60 +781,245 @@ local svp = SV:CreateButton({
     end,
 }, "BTN_SAVE_POS")
 
-local MapLabel = SV:AddLabel({
-    Name = "Map to Leave",
-}, "LABEL_MAP_TO_LEAVE")
+local function shouldWaitForLeave(mode)
+    if mode == "Raid" then return tostring(lvraid) == "" end
+    if mode == "Dungeon Easy" then return tostring(lveasy) == "" end
+    if mode == "Dungeon Medium" then return tostring(lvmedium) == "" end
+    return true
+end
 
-MapLabel:AddDropdown({
-    Options = islands,
-    CurrentOptions = {},
-    Callback = function(Options)
-        selectedMap = Options
-        print("DEBUG: Destination set to", selectedMap)
-    end,
-}, "MAPTOLEAVE")
+local function tpback()
+    if not hasJustTeleported then
+        hasJustTeleported = true
+        if SvPosition then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(SvPosition)
+            end
+        end
+    end
+end
 
-local lveasy = ""
-local Join2 = Gm:CreateInput({
+local TeleportRemote = game:GetService("ReplicatedStorage").Remotes.TeleportToIsland
+
+local leave1 = Gm:CreateInput({
     Name = "Leave Room Easy",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
     Numeric = true,
     Enter = true,
     MaxCharacters = 30,
-    Callback = function(Value)
-       lveasy = Value
-       print("InputEasy: Dungeon Easy auto-leave room:", lveasy)
+    Callback = function(Text)
+        lveasy = Text
     end,
-}, "JOIN1")
+}, "LEAVE1")
 
-local lvmedium = ""
-local Join3 = Gm:CreateInput({
+local leave2 = Gm:CreateInput({
     Name = "Leave Room Medium",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
     Numeric = true,
     Enter = true,
     MaxCharacters = 30,
-    Callback = function(Value)
-       lvmedium = Value
-       print("InputMedium: Dungeon Medium auto-leave room:", lvmedium)
+    Callback = function(Text)
+        lvmedium = Text
     end,
-}, "JOIN2")
+}, "LEAVE2")
 
-local lvraid = ""
-local Join1 = Gm:CreateInput({
+local leave3 = Gm:CreateInput({
     Name = "Leave Wave Raid",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
     PlaceholderText = "e.g. 5",
     Numeric = true,
     Enter = true,
-    Callback = function(Value)
-       lvraid = Value
-       print("InputRaid: Raid auto-leave wave:", lvraid)
+    Callback = function(Text)
+        lvraid = Text
     end,
-}, "JOIN3")
+}, "LEAVE3")
+
+local AutoLeaveAll = false
+local LvAll = Gm:CreateToggle({
+    Name = "Auto Leave",
+    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        AutoLeaveAll = Value
+        if not Value then return end
+        task.spawn(function()
+            while AutoLeaveAll do
+                pcall(function()
+                    local hud = LocalPlayer.PlayerGui.DungeonGui.Canvas.DungeonUI.Content.RoomsCleared
+
+                    -- Raid
+                    if Modes("Pyramid Raid") then
+                        if shouldWaitForLeave("Raid") then
+                            repeat task.wait(1) until not Modes("Pyramid Raid")
+                            TeleportRemote:FireServer(selectedMap)
+                            task.wait(2)
+                            tpback()
+                            return
+                        else
+                            local raidGui = hud:FindFirstChild("RoomsLabel")
+                            if raidGui then
+                                local waveNumber = tonumber(string.match(raidGui.ContentText, "%d+"))
+                                if waveNumber and tonumber(lvraid) == waveNumber then
+                                    if not hasJustTeleported then
+                                        TeleportRemote:FireServer(selectedMap)
+                                        task.wait(2)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    -- Dungeon Easy
+                    if Modes("Dungeon Easy") then
+                        if shouldWaitForLeave("Dungeon Easy") then
+                            repeat task.wait(1) until not Modes("Dungeon Easy")
+                            TeleportRemote:FireServer(selectedMap)
+                            task.wait(2)
+                            tpback()
+                            return
+                        else
+                            local gui = hud:FindFirstChild("RoomsLabel")
+                            if gui then
+                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
+                                if roomNumber and tonumber(lveasy) == roomNumber then
+                                    if not hasJustTeleported then
+                                        TeleportRemote:FireServer(selectedMap)
+                                        task.wait(2)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    -- Dungeon Medium
+                    if Modes("Dungeon Medium") then
+                        if shouldWaitForLeave("Dungeon Medium") then
+                            repeat task.wait(1) until not Modes("Dungeon Medium")
+                            TeleportRemote:FireServer(selectedMap)
+                            task.wait(2)
+                            tpback()
+                            return
+                        else
+                            local gui = hud:FindFirstChild("RoomsLabel")
+                            if gui then
+                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
+                                if roomNumber and tonumber(lvmedium) == roomNumber then
+                                    if not hasJustTeleported then
+                                        TeleportRemote:FireServer(selectedMap)
+                                        task.wait(2)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    if not AnyModeActive() then
+                        hasJustTeleported = false
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+}, "TOGGLEAUTOLEAVEALL")
+
+LvAll:AddDropdown({
+    Options = islands,
+    CurrentOptions = {},
+    Placeholder = "Map to Leave",
+    Callback = function(Options)
+        selectedMap = Options[1] or ""
+    end,
+}, "MAPTOLEAVE")
+
+local j1 = Gm:CreateToggle({
+    Name = "Auto Enter Dungeon Easy",
+    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoJoinEasy = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoJoinEasy do
+                pcall(function()
+                    if not AnyModeActive() then
+                        local min = os.date("*t").min
+                        if (min == 0 or min == 30) and os.time() - lastJoinEasy > 30 then
+                            if not Modes("Dungeon Easy") then
+                                lastJoinEasy = os.time()
+                                task.wait(1)
+                                game:GetService("ReplicatedStorage").Remotes.JoinDungeon:InvokeServer("Easy")
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+}, "TOGGLEAutoJ1")
+
+local j2 = Gm:CreateToggle({
+    Name = "Auto Enter Dungeon Medium",
+    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoJoinMedium = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoJoinMedium do
+                pcall(function()
+                    if not AnyModeActive() then
+                        local min = os.date("*t").min
+                        if (min == 15 or min == 45) and os.time() - lastJoinMedium > 30 then
+                            if not Modes("Dungeon Medium") then
+                                lastJoinMedium = os.time()
+                                task.wait(1)
+                                game:GetService("ReplicatedStorage").Remotes.JoinDungeon:InvokeServer("Medium")
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+}, "TOGGLEAutoJ2")
+
+local j3 = Gm:CreateToggle({
+    Name = "Auto Create Raid",
+    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoJoinRaid = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoJoinRaid do
+                pcall(function()
+                    if not AnyModeActive() then
+                        if not Modes("Pyramid Raid") then
+                            task.wait(1)
+                            game:GetService("ReplicatedStorage").Remotes.JoinRaid:InvokeServer("World4")
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+}, "TOGGLEAutoJ3")
 
 local antiAfkEnabled = false
 ConfigMisc:CreateToggle({
