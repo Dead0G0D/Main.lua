@@ -12,7 +12,7 @@ GameName = ProductInfo.Name
 local Window = Starlight:CreateWindow({
     Name = "/Latency/",
     Subtitle = GameName,
-    Icon = "136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
+    Icon = "115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 800),
     BuildWarnings = true,
     InterfaceAdvertisingPrompts = true,
@@ -24,13 +24,13 @@ local Window = Starlight:CreateWindow({
     },
 })
 
-local MS = Window:CreateTabSection("--MAIN--")
-local PL = Window:CreateTabSection("--PLAYER/MISC--")
-local SS = Window:CreateTabSection("--SETTINGS--")
+local MS = Window:CreateTabSection("MAIN")
+local PL = Window:CreateTabSection("PLAYER/MISC")
+local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = 77630928106024,
+    Icon = "115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_MAIN")
                --Groupboxs--
@@ -42,7 +42,7 @@ local AutoFarmBox = MainTab:CreateGroupbox({
 
 local PlayerTab = PL:CreateTab({
     Name = "| Player/Misc",
-    Icon = 77630928106024,
+    Icon = "115111586638831" --77630928106024,
     Columns = 1,
 }, "TAB_PLAYER")
 
@@ -60,7 +60,7 @@ local Up = MainTab:CreateGroupbox({
 
 local Modes = MS:CreateTab({
     Name = "| Gamemodes",
-    Icon = 77630928106024,
+    Icon = "115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
@@ -188,7 +188,7 @@ end
 
 local FarmModeLabel = AutoFarmBox:CreateLabel({
     Name = "Farm Mode",
-    Icon = NebulaIcons:GetIcon('arrows-left-right', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('corner-right-down', 'Lucide'),
 }, "LABEL_FARM_MODE")
 
 FarmModeLabel:AddDropdown({
@@ -201,7 +201,7 @@ FarmModeLabel:AddDropdown({
 
 local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Name = "Auto Farm",
-    Icon = NebulaIcons:GetIcon('target', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('cricket-ball', 'Lab'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -284,6 +284,11 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_NPC_AUTO_FARM")
 
+AutoFarmBox:CreateLabel({
+    Name = "Normal Enemies",
+    Icon = NebulaIcons:GetIcon('user', 'Lucide'),
+}, "LABEL1")
+
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
     CurrentOptions = {},
@@ -293,6 +298,11 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
         selectedNpcNames = Options
     end,
 }, "DD_NPC_SELECT")
+
+AutoFarmBox:CreateLabel({
+    Name = "Priority Enemies",
+    Icon = NebulaIcons:GetIcon('user-star', 'Lucide'),
+}, "LABEL2")
 
 local PriorityDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
@@ -378,8 +388,8 @@ local spt = {}
 local autoupg = false
 Up:CreateDivider()
 local autoprott1 = Up:CreateToggle({
-    Name = "Auto Roll",
-    Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
+    Name = "Auto Gachas Roll",
+    Icon = NebulaIcons:GetIcon('dices', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -443,7 +453,7 @@ autoprott2:AddDropdown({
 local autoEquip = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Avatar",
-    Icon = NebulaIcons:GetIcon('armchair', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('coins-exchange', 'Lab'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -465,7 +475,7 @@ Up:CreateDivider()
 local autoEquip2 = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Accessory",
-    Icon = NebulaIcons:GetIcon('armchair', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('coins-exchange', 'Lab'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -935,7 +945,7 @@ LvAll:AddDropdown({
 
 local j1 = Gm:CreateToggle({
     Name = "Auto Enter Dungeon Easy",
-    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('log-in', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
