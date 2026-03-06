@@ -284,7 +284,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_NPC_AUTO_FARM")
 
-AutoFarmBox:CreateLabel({
+local l2 = AutoFarmBox:CreateLabel({
     Name = "Normal Enemies",
     Icon = NebulaIcons:GetIcon('user', 'Lucide'),
 }, "LABEL1")
@@ -299,7 +299,7 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
     end,
 }, "DD_NPC_SELECT")
 
-AutoFarmBox:CreateLabel({
+local l1 = AutoFarmBox:CreateLabel({
     Name = "Priority Enemies",
     Icon = NebulaIcons:GetIcon('user-star', 'Lucide'),
 }, "LABEL2")
