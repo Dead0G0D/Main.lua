@@ -15,7 +15,10 @@ end
 local Starlight = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/starlight"))()
 local NebulaIcons = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/nebula-icon-library-loader"))()
 
-GameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+MarketplaceService = game:GetService("MarketplaceService")
+PlaceId = game.PlaceId
+ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
+GameName = ProductInfo.Name
 
 local Window = Starlight:CreateWindow({
     Name = "idkhub",
