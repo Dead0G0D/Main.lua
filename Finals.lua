@@ -294,10 +294,11 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_NPC_AUTO_FARM")
 
-local l1 = NpcAutoFarm:CreateLabel({
-    Name = "Enemies and Priority Enemies",
+NpcAutoFarm:CreateParagraph({
+    Name = "Auto Farm Choose",
     Icon = NebulaIcons:GetIcon('user', 'Lucide'),
-}, "LABEL1")
+    Content = "Enemies and Priority Enemies",
+}, "PARAFARM")
 
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
