@@ -198,7 +198,7 @@ end
 
 local FarmModeLabel = AutoFarmBox:CreateLabel({
     Name = "Farm Mode",
-    Icon = NebulaIcons:GetIcon('corner-right-down', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('monitor-cog', 'Lucide'),
 }, "LABEL_FARM_MODE")
 
 FarmModeLabel:AddDropdown({
@@ -294,7 +294,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_NPC_AUTO_FARM")
 
-NpcAutoFarm:CreateParagraph({
+AutoFarmBox:CreateParagraph({
     Name = "Auto Farm Choose",
     Icon = NebulaIcons:GetIcon('user', 'Lucide'),
     Content = "Enemies and Priority Enemies",
@@ -346,7 +346,7 @@ local petroll = islands[1] or ""
 local autopetroll = false
 local autopetroll = Up:CreateToggle({
     Name = "Pet Roll",
-    Icon = NebulaIcons:GetIcon('dice-five', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -392,7 +392,6 @@ end)()
 
 local spt = {}
 local autoupg = false
-Up:CreateDivider()
 local autoprott1 = Up:CreateToggle({
     Name = "Auto Gachas Roll",
     Icon = NebulaIcons:GetIcon('dices', 'Lucide'),
@@ -425,7 +424,6 @@ autoprott1:AddDropdown({
 
 local spt2 = {}
 local autopro = false
-Up:CreateDivider()
 local autoprott2 = Up:CreateToggle({
     Name = "Auto Progression",
     Icon = NebulaIcons:GetIcon('chart-line-up', 'Phosphor'),
@@ -459,7 +457,7 @@ autoprott2:AddDropdown({
 local autoEquip = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Avatar",
-    Icon = NebulaIcons:GetIcon('coins-exchange', 'Lab'),
+    Icon = NebulaIcons:GetIcon('user-star', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -476,12 +474,10 @@ Pl:CreateToggle({
     end,
 }, "TOGGLE_AUTO_EQUIP")
 
-Up:CreateDivider()
-
 local autoEquip2 = false
 Pl:CreateToggle({
     Name = "Auto Equip Best Accessory",
-    Icon = NebulaIcons:GetIcon('coins-exchange', 'Lab'),
+    Icon = NebulaIcons:GetIcon('hat-glasses', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
