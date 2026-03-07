@@ -195,11 +195,10 @@ local function GetUniqueNpcNames()
     return list
 end
 
-AutoFarmBox:CreateParagraph({
-    Name = "Auto Farm Choose",
+local FarmModeLabel = AutoFarmBox:CreateLabel({
+    Name = "Tp or legit mode & Enemies and Priority Enemies",
     Icon = NebulaIcons:GetIcon('user', 'Lucide'),
-    Content = "Tp or legit mode\nEnemies and Priority Enemies",
-}, "PARAFARM")
+}, "LABEL_FARM_MODE")
 
 FarmModeLabel:AddDropdown({
     Options = {"Tp", "Legit"},
