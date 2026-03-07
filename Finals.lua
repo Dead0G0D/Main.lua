@@ -36,7 +36,6 @@ local Window = Starlight:CreateWindow({
 })
 
 local MS = Window:CreateTabSection("MAIN")
-local PL = Window:CreateTabSection("PLAYER/MISC")
 local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
@@ -51,6 +50,12 @@ local AutoFarmBox = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_AUTOFARM")
 
+local PlayerTab = MS:CreateTab({
+    Name = "| Player",
+    Icon = "114022464350371", --115111586638831", --77630928106024,
+    Columns = 1,
+}, "TAB_PLAYER")
+              --Groupboxs--
 local Pl = PlayerTab:CreateGroupbox({
     Name = "Player",
     Icon = NebulaIcons:GetIcon('trending_up', 'Material'),
