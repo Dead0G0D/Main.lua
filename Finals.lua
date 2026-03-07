@@ -80,17 +80,17 @@ local GamemodeBox = Modes:CreateGroupbox({
     Column = 1,
 }, "GB_AUTOFARMMODES")
 
-local Gm = Modes:CreateGroupbox({
-    Name = "Join/Leave",
-    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
-    Column = 1,
-}, "GB_JLMODES")
-
 local SV = Modes:CreateGroupbox({
     Name = "Save Position",
     Icon = NebulaIcons:GetIcon('map', 'Phosphor'),
     Column = 1,
 }, "GB_SVMODES")
+
+local Gm = Modes:CreateGroupbox({
+    Name = "Join/Leave",
+    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Column = 1,
+}, "GB_JLMODES")
 
 local Theme = SS:CreateTab({
     Name = "| Themes",
@@ -156,7 +156,6 @@ end
 
 local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
 local ac = false
-Up:CreateDivider()
 local Atc = AutoFarmBox:CreateToggle({
     Name = "Auto Click",
     Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
@@ -196,10 +195,11 @@ local function GetUniqueNpcNames()
     return list
 end
 
-local FarmModeLabel = AutoFarmBox:CreateLabel({
-    Name = "Farm Mode",
-    Icon = NebulaIcons:GetIcon('monitor-cog', 'Lucide'),
-}, "LABEL_FARM_MODE")
+AutoFarmBox:CreateParagraph({
+    Name = "Auto Farm Choose",
+    Icon = NebulaIcons:GetIcon('user', 'Lucide'),
+    Content = "Tp or legit mode\nEnemies and Priority Enemies",
+}, "PARAFARM")
 
 FarmModeLabel:AddDropdown({
     Options = {"Tp", "Legit"},
@@ -294,12 +294,6 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_NPC_AUTO_FARM")
 
-AutoFarmBox:CreateParagraph({
-    Name = "Auto Farm Choose",
-    Icon = NebulaIcons:GetIcon('user', 'Lucide'),
-    Content = "Enemies and Priority Enemies",
-}, "PARAFARM")
-
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueNpcNames(),
     CurrentOptions = {},
@@ -375,7 +369,7 @@ autopetroll:AddDropdown({
 local UpOptions = (function()
     local list = {}
     for _, v in ipairs(game:GetService("ReplicatedStorage").SharedData.PowerConfigs:GetChildren()) do
-              if v.Name ~= "Hunter" and v.Name ~= "PyramidKey" and v.Name ~= "Dungeon" then
+              if v.Name ~= "Hunter" and v.Name ~= "PyramidKey" and v.Name ~= "Dungeon" and v.Name ~= "PyramidShard" and v.Name ~= "HeroDice" then
                   table.insert(list, v.Name)
               end
           end
@@ -426,7 +420,7 @@ local spt2 = {}
 local autopro = false
 local autoprott2 = Up:CreateToggle({
     Name = "Auto Progression",
-    Icon = NebulaIcons:GetIcon('chart-line-up', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('circle-fading-arrow-up', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -702,7 +696,6 @@ local GMF = GamemodeBox:CreateToggle({
 }, "TOGGLE_AUTO_FARM_MODES")
 
 local autoRaid = false
-
 GamemodeBox:CreateToggle({
     Name = "Auto Next Room Raid",
     Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
@@ -805,7 +798,94 @@ local function tpback()
     end
 end
 
-local TeleportRemote = game:GetService("ReplicatedStorage").Remotes.TeleportToIsland
+local AutoLeaveAll = false
+local LvAll = Gm:CreateToggle({
+    Name = "Auto Leave",
+    Icon = NebulaIcons:GetIcon('log-out', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        AutoLeaveAll = Value
+        if not Value then return end
+        task.spawn(function()
+            while AutoLeaveAll do
+                pcall(function()
+                    local hud = LocalPlayer.PlayerGui.DungeonGui.Canvas.DungeonUI.Content.RoomsCleared
+                    if Modes("Pyramid Raid") then
+                        if shouldWaitForLeave("Raid") then
+                            repeat task.wait(1) until not Modes("Pyramid Raid")
+                            game:GetService("ReplicatedStorage").Remotes.TeleportToIsland:FireServer(selectedMap)
+                            task.wait(.5)
+                            tpback()
+                            return
+                        else
+                            local raidGui = hud:FindFirstChild("RoomsLabel")
+                            if raidGui then
+                                local waveNumber = tonumber(string.match(raidGui.ContentText, "%d+"))
+                                if waveNumber and tonumber(lvraid) == waveNumber then
+                                    if not hasJustTeleported then
+                                        TeleportRemote:FireServer(selectedMap)
+                                        task.wait(.5)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    
+                    if Modes("Dungeon Easy") then
+                        if shouldWaitForLeave("Dungeon Easy") then
+                            repeat task.wait(1) until not Modes("Dungeon Easy")
+                            TeleportRemote:FireServer(selectedMap)
+                            task.wait(2)
+                            tpback()
+                            return
+                        else
+                            local gui = hud:FindFirstChild("RoomsLabel")
+                            if gui then
+                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
+                                if roomNumber and tonumber(lveasy) == roomNumber then
+                                    if not hasJustTeleported then
+                                        game:GetService("ReplicatedStorage").Remotes.TeleportToIsland:FireServer(selectedMap)
+                                        task.wait(.5)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    
+                    if Modes("Dungeon Medium") then
+                        if shouldWaitForLeave("Dungeon Medium") then
+                            repeat task.wait(1) until not Modes("Dungeon Medium")
+                            TeleportRemote:FireServer(selectedMap)
+                            task.wait(2)
+                            tpback()
+                            return
+                        else
+                            local gui = hud:FindFirstChild("RoomsLabel")
+                            if gui then
+                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
+                                if roomNumber and tonumber(lvmedium) == roomNumber then
+                                    if not hasJustTeleported then
+                                        game:GetService("ReplicatedStorage").Remotes.TeleportToIsland:FireServer(selectedMap)
+                                        task.wait(.5)
+                                        tpback()
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    if not AnyModeActive() then
+                        hasJustTeleported = false
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+}, "TOGGLEAUTOLEAVEALL")
 
 local leave1 = Gm:CreateInput({
     Name = "Leave Room Easy",
@@ -842,99 +922,6 @@ local leave3 = Gm:CreateInput({
         lvraid = Text
     end,
 }, "LEAVE3")
-
-local AutoLeaveAll = false
-local LvAll = Gm:CreateToggle({
-    Name = "Auto Leave",
-    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
-    CurrentValue = false,
-    Style = 2,
-    Callback = function(Value)
-        AutoLeaveAll = Value
-        if not Value then return end
-        task.spawn(function()
-            while AutoLeaveAll do
-                pcall(function()
-                    local hud = LocalPlayer.PlayerGui.DungeonGui.Canvas.DungeonUI.Content.RoomsCleared
-
-                    -- Raid
-                    if Modes("Pyramid Raid") then
-                        if shouldWaitForLeave("Raid") then
-                            repeat task.wait(1) until not Modes("Pyramid Raid")
-                            TeleportRemote:FireServer(selectedMap)
-                            task.wait(2)
-                            tpback()
-                            return
-                        else
-                            local raidGui = hud:FindFirstChild("RoomsLabel")
-                            if raidGui then
-                                local waveNumber = tonumber(string.match(raidGui.ContentText, "%d+"))
-                                if waveNumber and tonumber(lvraid) == waveNumber then
-                                    if not hasJustTeleported then
-                                        TeleportRemote:FireServer(selectedMap)
-                                        task.wait(2)
-                                        tpback()
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    -- Dungeon Easy
-                    if Modes("Dungeon Easy") then
-                        if shouldWaitForLeave("Dungeon Easy") then
-                            repeat task.wait(1) until not Modes("Dungeon Easy")
-                            TeleportRemote:FireServer(selectedMap)
-                            task.wait(2)
-                            tpback()
-                            return
-                        else
-                            local gui = hud:FindFirstChild("RoomsLabel")
-                            if gui then
-                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
-                                if roomNumber and tonumber(lveasy) == roomNumber then
-                                    if not hasJustTeleported then
-                                        TeleportRemote:FireServer(selectedMap)
-                                        task.wait(2)
-                                        tpback()
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    -- Dungeon Medium
-                    if Modes("Dungeon Medium") then
-                        if shouldWaitForLeave("Dungeon Medium") then
-                            repeat task.wait(1) until not Modes("Dungeon Medium")
-                            TeleportRemote:FireServer(selectedMap)
-                            task.wait(2)
-                            tpback()
-                            return
-                        else
-                            local gui = hud:FindFirstChild("RoomsLabel")
-                            if gui then
-                                local roomNumber = tonumber(string.match(gui.ContentText, "%d+"))
-                                if roomNumber and tonumber(lvmedium) == roomNumber then
-                                    if not hasJustTeleported then
-                                        TeleportRemote:FireServer(selectedMap)
-                                        task.wait(2)
-                                        tpback()
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    if not AnyModeActive() then
-                        hasJustTeleported = false
-                    end
-                end)
-                task.wait(0.1)
-            end
-        end)
-    end,
-}, "TOGGLEAUTOLEAVEALL")
 
 LvAll:AddDropdown({
     Options = islands,
@@ -975,7 +962,7 @@ local j1 = Gm:CreateToggle({
 
 local j2 = Gm:CreateToggle({
     Name = "Auto Enter Dungeon Medium",
-    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('log-in', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -1003,7 +990,7 @@ local j2 = Gm:CreateToggle({
 
 local j3 = Gm:CreateToggle({
     Name = "Auto Create Raid",
-    Icon = NebulaIcons:GetIcon('door', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('log-in', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -1079,7 +1066,7 @@ end
 
 ConfigMisc:CreateToggle({
     Name = "Anti AFK",
-    Icon = NebulaIcons:GetIcon('activity', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('wifi-off', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -1105,7 +1092,7 @@ end)
 local afkModeEnabled = false
 ConfigMisc:CreateToggle({
     Name = "AFK Mode",
-    Icon = NebulaIcons:GetIcon('moon', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('monitor-off', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
