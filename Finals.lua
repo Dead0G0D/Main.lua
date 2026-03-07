@@ -1035,6 +1035,56 @@ local j3 = Gm:CreateToggle({
 
 local antiAfkEnabled = false
 
+local function randRange(a, b)
+    return a + math.random() * (b - a)
+end
+
+local function cameraNudge()
+    pcall(function()
+        local cam = workspace.CurrentCamera
+        if cam then
+            cam.CFrame = cam.CFrame * CFrame.Angles(
+                math.rad(randRange(-2, 2)),
+                math.rad(randRange(-2, 2)),
+                0
+            )
+        end
+    end)
+end
+
+local function characterMovement()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = hrp.CFrame * CFrame.new(randRange(-0.2, 0.2), 0, randRange(-0.2, 0.2))
+        end
+    end)
+end
+
+local function virtualAction()
+    pcall(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+end
+
+local function performAntiAFK()
+    if not antiAfkEnabled then return end
+    
+    virtualAction()
+    
+    if math.random() < 0.6 then
+        cameraNudge()
+    end
+    
+    if math.random() < 0.3 then
+        characterMovement()
+    end
+end
+
 ConfigMisc:CreateToggle({
     Name = "Anti AFK",
     Icon = NebulaIcons:GetIcon('activity', 'Phosphor'),
@@ -1044,71 +1094,126 @@ ConfigMisc:CreateToggle({
         antiAfkEnabled = Value
         
         if Value then
-            local function randRange(a, b)
-                return a + math.random() * (b - a)
-            end
-            
-            local function cameraNudge()
-                pcall(function()
-                    local cam = workspace.CurrentCamera
-                    if cam then
-                        cam.CFrame = cam.CFrame * CFrame.Angles(
-                            math.rad(randRange(-2, 2)),
-                            math.rad(randRange(-2, 2)),
-                            0
-                        )
-                    end
-                end)
-            end
-            
-            local function characterMovement()
-                pcall(function()
-                    local char = LocalPlayer.Character
-                    if not char then return end
-                    
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        hrp.CFrame = hrp.CFrame * CFrame.new(randRange(-0.2, 0.2), 0, randRange(-0.2, 0.2))
-                    end
-                end)
-            end
-            
-            local function virtualAction()
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-            end
-            
-            local function performAntiAFK()
-                if not antiAfkEnabled then return end
-                
-                virtualAction()
-                
-                if math.random() < 0.6 then
-                    cameraNudge()
-                end
-                
-                if math.random() < 0.3 then
-                    characterMovement()
-                end
-            end
-            
             task.spawn(function()
                 while antiAfkEnabled do
                     task.wait(randRange(45, 75))
                     performAntiAFK()
                 end
             end)
-            
-            LocalPlayer.Idled:Connect(function()
-                if antiAfkEnabled then
-                    performAntiAFK()
-                end
-            end)
         end
     end,
 }, "TOGGLE_ANTI_AFK")
+
+LocalPlayer.Idled:Connect(function()
+    if antiAfkEnabled then
+        performAntiAFK()
+    end
+end)
+
+local afkModeEnabled = false
+ConfigMisc:CreateToggle({
+    Name = "AFK Mode",
+    Icon = NebulaIcons:GetIcon('moon', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        afkModeEnabled = Value
+        
+        if Value then
+            local camera = workspace.CurrentCamera
+            local Lighting = game:GetService("Lighting")
+            
+            local storedParts = {}
+            local disabledLights = {}
+            local disabledFX = {}
+            local camConn, oldCamType, oldCamCFrame
+            
+            local function potatoWorld(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        if enable then
+                            storedParts[v] = v.Material
+                            v.Material = Enum.Material.Plastic
+                            v.CastShadow = false
+                        elseif storedParts[v] then
+                            v.Material = storedParts[v]
+                        end
+                    elseif v:IsA("Texture") or v:IsA("Decal") then
+                        v.Transparency = enable and 1 or 0
+                    end
+                end
+                if not enable then storedParts = {} end
+            end
+            
+            local function toggleShaders(enable)
+                for _, v in ipairs(Lighting:GetChildren()) do
+                    if v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") then
+                        v.Enabled = not enable
+                    end
+                end
+            end
+            
+            local function toggleLights(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                        if enable and v.Enabled then
+                            disabledLights[v] = true
+                            v.Enabled = false
+                        elseif disabledLights[v] then
+                            v.Enabled = true
+                        end
+                    end
+                end
+                if not enable then disabledLights = {} end
+            end
+            
+            local function toggleFX(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                        if enable and v.Enabled then
+                            disabledFX[v] = true
+                            v.Enabled = false
+                        elseif disabledFX[v] then
+                            v.Enabled = true
+                        end
+                    end
+                end
+                if not enable then disabledFX = {} end
+            end
+            
+            local function lockCamera(enable)
+                if enable then
+                    oldCamType = camera.CameraType
+                    oldCamCFrame = camera.CFrame
+                    camera.CameraType = Enum.CameraType.Scriptable
+                    camConn = RunService.RenderStepped:Connect(function()
+                        camera.CFrame = CFrame.new(0, 999999, 0)
+                    end)
+                else
+                    if camConn then camConn:Disconnect() end
+                    camera.CameraType = oldCamType or Enum.CameraType.Custom
+                    if oldCamCFrame then camera.CFrame = oldCamCFrame end
+                end
+            end
+            
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            potatoWorld(true)
+            toggleShaders(true)
+            toggleLights(true)
+            toggleFX(true)
+            lockCamera(true)
+            
+            task.spawn(function()
+                repeat task.wait() until not afkModeEnabled
+                potatoWorld(false)
+                toggleShaders(false)
+                toggleLights(false)
+                toggleFX(false)
+                lockCamera(false)
+            end)
+        end
+    end,
+}, "TOGGLE_AFK_MODE")
 
 Starlight:OnDestroy(function()
     print("Script Deleted")
