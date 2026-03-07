@@ -1,9 +1,9 @@
 getgenv().InterfaceName = "Latency"
 getgenv().SecureMode = true
 
+executor = identifyexecutor and identifyexecutor() or "Unknown"
 local device = "Unknown"
 local UIS = game:GetService("UserInputService")
-
 if UIS.TouchEnabled and not UIS.KeyboardEnabled then
     device = "Mobile"
     print("Device:", device)
@@ -15,14 +15,11 @@ end
 local Starlight = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/starlight"))()
 local NebulaIcons = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/nebula-icon-library-loader"))()
 
-MarketplaceService = game:GetService("MarketplaceService")
-PlaceId = game.PlaceId
-ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
-GameName = ProductInfo.Name
+GameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
 
 local Window = Starlight:CreateWindow({
-    Name = string.format("idkhub [%s]", device),
-    Subtitle = GameName,
+    Name = "idkhub",
+    Subtitle = string.format("[%s] [%s] [%s]", GameName, device, executor),
     Icon = "114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 800),
     BuildWarnings = true,
