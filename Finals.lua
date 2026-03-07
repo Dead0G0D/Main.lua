@@ -21,7 +21,7 @@ ProductInfo = MarketplaceService:GetProductInfo(PlaceId)
 GameName = ProductInfo.Name
 
 local Window = Starlight:CreateWindow({
-    Name = "idkhub\nHMMMM",
+    Name = "idkhub",
     Subtitle = string.format("%s [%s] [%s]", GameName, device, executor),
     Icon = "114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 800),
@@ -1034,6 +1034,7 @@ local j3 = Gm:CreateToggle({
 }, "TOGGLEAutoJ3")
 
 local antiAfkEnabled = false
+
 ConfigMisc:CreateToggle({
     Name = "Anti AFK",
     Icon = NebulaIcons:GetIcon('activity', 'Phosphor'),
@@ -1041,15 +1042,68 @@ ConfigMisc:CreateToggle({
     Style = 2,
     Callback = function(Value)
         antiAfkEnabled = Value
+        
         if Value then
+            local function randRange(a, b)
+                return a + math.random() * (b - a)
+            end
+            
+            local function cameraNudge()
+                pcall(function()
+                    local cam = workspace.CurrentCamera
+                    if cam then
+                        cam.CFrame = cam.CFrame * CFrame.Angles(
+                            math.rad(randRange(-2, 2)),
+                            math.rad(randRange(-2, 2)),
+                            0
+                        )
+                    end
+                end)
+            end
+            
+            local function characterMovement()
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if not char then return end
+                    
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.CFrame = hrp.CFrame * CFrame.new(randRange(-0.2, 0.2), 0, randRange(-0.2, 0.2))
+                    end
+                end)
+            end
+            
+            local function virtualAction()
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                end)
+            end
+            
+            local function performAntiAFK()
+                if not antiAfkEnabled then return end
+                
+                virtualAction()
+                
+                if math.random() < 0.6 then
+                    cameraNudge()
+                end
+                
+                if math.random() < 0.3 then
+                    characterMovement()
+                end
+            end
+            
             task.spawn(function()
                 while antiAfkEnabled do
-                    task.wait(500)
-                    if not antiAfkEnabled then break end
-                    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                    if hum then hum.Jump = true end
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new(0, 0))
+                    task.wait(randRange(45, 75))
+                    performAntiAFK()
+                end
+            end)
+            
+            LocalPlayer.Idled:Connect(function()
+                if antiAfkEnabled then
+                    performAntiAFK()
                 end
             end)
         end
