@@ -22,7 +22,7 @@ GameName = ProductInfo.Name
 
 local Window = Starlight:CreateWindow({
     Name = "idkhub",
-    Subtitle = string.format("[%s] [%s] [%s]", GameName, device, executor),
+    Subtitle = string.format("%s [%s] [%s]", GameName, device, executor),
     Icon = "114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 800),
     BuildWarnings = true,
