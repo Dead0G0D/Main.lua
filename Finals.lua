@@ -51,12 +51,6 @@ local AutoFarmBox = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_AUTOFARM")
 
-local PlayerTab = PL:CreateTab({
-    Name = "| Player/Misc",
-    Icon = "114022464350371", --"115111586638831", --77630928106024,
-    Columns = 1,
-}, "TAB_PLAYER")
-
 local Pl = PlayerTab:CreateGroupbox({
     Name = "Player",
     Icon = NebulaIcons:GetIcon('trending_up', 'Material'),
