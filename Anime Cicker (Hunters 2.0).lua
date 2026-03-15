@@ -723,6 +723,7 @@ local function tpback()
             if autoSetup then
                 equipAllPower()
             end
+            hasJustTeleported = false
         end
     end
 end
