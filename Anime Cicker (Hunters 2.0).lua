@@ -47,16 +47,10 @@ local AutoFarmBox = MainTab:CreateGroupbox({
     Icon = NebulaIcons:GetIcon('refresh-ccw-dot', 'Lucide'),
     Column = 1,
 }, "GB_AUTOFARM")
-
-local PlayerTab = MS:CreateTab({
-    Name = "| Player",
-    Icon = "114022464350371", --115111586638831", --77630928106024,
-    Columns = 1,
-}, "TAB_PLAYER")
               --Groupboxs--
-local Pl = PlayerTab:CreateGroupbox({
+local Pl = MainTab:CreateGroupbox({
     Name = "Player",
-    Icon = NebulaIcons:GetIcon('trending_up', 'Material'),
+    Icon = NebulaIcons:GetIcon('user', 'Lucide'),
     Column = 1,
 }, "GB_PLMISC")
 
@@ -318,41 +312,6 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_AUTO_FARM_ENEMY")
 
-local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal")
-local ac = false
-local Atc = AutoFarmBox:CreateToggle({
-    Name = "Auto Click",
-    Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
-    CurrentValue = false,
-    Style = 2,
-    Callback = function(Value)
-        ac = Value
-        if not Value then return end
-        task.spawn(function()
-            while ac do
-                pcall(function()
-                  local targetIDs = {}
-                  if currentTargetID then
-                      table.insert(targetIDs, currentTargetID)
-                  else
-                      targetIDs = getEnemyIDsInRadius(15)
-                  end
-                  if #targetIDs > 0 then
-                        for _, id in ipairs(targetIDs) do
-                            rp:FireServer("General", "Attack", "Click", id)
-                            rp:FireServer("General", "Attack", "FirstShinigami", id)
-                            rp:FireServer("General", "Attack", "FirstShadow", id)
-                        end
-                    else
-                      rp:FireServer("General", "Attack", "Click")
-                  end
-                end)
-                RunService.Heartbeat:Wait()
-            end
-        end)
-    end,
-}, "TOGGLE_AUTOCLICK")
-
 local NpcDropdown = NpcAutoFarm:AddDropdown({
     Options = GetUniqueEnemyNames(),
     CurrentOptions = {},
@@ -385,6 +344,76 @@ AutoFarmBox:CreateButton({
     end,
 }, "BTN_REFRESH_NPCS")
 
+local rp = rp
+local ac = false
+local Atc = Pl:CreateToggle({
+    Name = "Auto Click",
+    Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        ac = Value
+        if not Value then return end
+        task.spawn(function()
+            while ac do
+                pcall(function()
+                  local targetIDs = {}
+                  if currentTargetID then
+                      table.insert(targetIDs, currentTargetID)
+                  else
+                      targetIDs = getEnemyIDsInRadius(15)
+                  end
+                  if #targetIDs > 0 then
+                        for _, id in ipairs(targetIDs) do
+                            rp:FireServer("General", "Attack", "Click", id)
+                            rp:FireServer("General", "Attack", "FirstShinigami", id)
+                            rp:FireServer("General", "Attack", "FirstShadow", id)
+                        end
+                    else
+                      rp:FireServer("General", "Attack", "Click")
+                  end
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_AUTOCLICK")
+
+local CODES = {"DAILYREWARD9", "TELEPORTFIX", "THX5MVISITS", "DAILYREWARD9", "DAILYREWARD8", "MINIUPD2.5", "DAILYREWARD7", "20KLIKES", "UPD2.2QOL", "DAILYREWARD6", "UPD2QOL", "AVATARBUGS", "RELEASE", "TESTERREWARD", "1KLIKES", "5KMEMBERSDC", "SRRY4DELAY", "5KFAVS", "RAIDTELEPORT", "ACCESSORYTYPE", "FIXEDMERCHANT", "THX4KACTIVES", "2.5KLIKES", "FIXEDINDEX", "THX5KACTIVES", "SRRY4SHUTDOWN", "PASSIVEUPDATE", "UPDATE1", "5KLIKES", "4KFAVORITES", "LEVELUPGRADEFIXED", "10KLIKES", "AVATARBUGS", "10KLIKES", "5KFAVS", "DAILYREWARD", "POWERARENA", "SORRYFORDELAY", "FIXEDMOBILE", "DAILYREWARD3", "DAILYREWARD2", "DAILYREWARD4", "15KLIKES", "THX8KACTIVES", "DAILYREWARD5", "GACHIAKUTA", "GACHIAKUTADELAY", "THX10KACTIVES", "RELEASEPART2", "THEDEVGOAT", "FIXEDPASSIVEINTERACT"}
+Pl:CreateButton({
+    Name = "Redeem Codes",
+    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        for _, code in ipairs(CODES) do
+            rp:FireServer("General", "Codes", "Claim", code)
+        end
+    end,
+}, "BB_CODES")
+
+local upp = false
+local up1 = Pl:CreateToggle({
+    Name = "Auto Rankup",
+    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        upp = Value
+        if not Value then return end
+        task.spawn(function()
+            while upp do
+                pcall(function()
+                local args = {"General", "RankUp", "Upgrade"}
+                rp:FireServer(unpack(args))
+                removeNotifications()
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_RANKUP")
+
 local stars = {}
 for _, star in ipairs(game:GetService("ReplicatedStorage").Shared.Stars:GetChildren()) do
     table.insert(stars, star.Name)
@@ -404,7 +433,7 @@ local AutoPet = Up:CreateToggle({
             while autopetroll do
                 pcall(function()
                     local args = {"General", "Stars", "Multi", petroll}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer(unpack(args))
+                    ro:FireServer(unpack(args))
                 end)
                 RunService.Heartbeat:Wait()
             end
@@ -420,28 +449,6 @@ AutoPet:AddDropdown({
     end,
 }, "DD_PETROLL")
 
-local upp = false
-local up1 = Up:CreateToggle({
-    Name = "Auto Rankup",
-    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
-    CurrentValue = false,
-    Style = 2,
-    Callback = function(Value)
-        upp = Value
-        if not Value then return end
-        task.spawn(function()
-            while upp do
-                pcall(function()
-                local args = {"General", "RankUp", "Upgrade"}
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer(unpack(args))
-                removeNotifications()
-                end)
-                RunService.Heartbeat:Wait()
-            end
-        end)
-    end,
-}, "TOGGLE_PETROLL")
-
 local selectedStat = "Power"
 local upp2 = false
 local up2 = Up:CreateToggle({
@@ -456,7 +463,7 @@ local up2 = Up:CreateToggle({
             while upp2 do
                 if selectedStat and selectedStat ~= "" then
                     pcall(function()
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer("General", "LevelUpgrades", "Upgrade", selectedStat, 1)
+                        rp:FireServer("General", "LevelUpgrades", "Upgrade", selectedStat, 1)
                         removeNotifications()
                     end)
                 end
@@ -496,7 +503,7 @@ local up3 = Up:CreateToggle({
                 if selectedGachas and #selectedGachas > 0 then
                     for _, gacha in ipairs(selectedGachas) do
                         pcall(function()
-                            game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("General", "Gacha", "Roll", gacha, {})
+                            rp:FireServer("General", "Gacha", "Roll", gacha, {})
                         end)
                     end
                 end
@@ -696,13 +703,13 @@ Gm:CreateToggle({
 
 local function equipAllDamage()
     pcall(function()
-        game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("General", "StatusBest", "Best", "Damage")
+        rp:FireServer("General", "StatusBest", "Best", "Damage")
     end)
 end
 
 local function equipAllPower()
     pcall(function()
-        game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("General", "StatusBest", "Best", "Power")
+        rp:FireServer("General", "StatusBest", "Best", "Power")
     end)
 end
 
@@ -715,7 +722,7 @@ local function tpback()
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
             pcall(function()
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer("General", "Teleport", "Teleport", selectedMap)
+                rp:FireServer("General", "Teleport", "Teleport", selectedMap)
             end)
             task.wait(0.5)
             hrp.CFrame = CFrame.new(SvPosition)
@@ -956,7 +963,7 @@ Gm:CreateToggle({
                             lastJoinEasy = os.time()
                             if autoSetup then equipAllDamage() end
                             task.wait(1)
-                            game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Dungeon Easy", "Join")
+                            rp:FireServer("Gamemodes", "Dungeon Easy", "Join")
                         end
                     end
                 end)
@@ -983,7 +990,7 @@ Gm:CreateToggle({
                             lastJoinMedium = os.time()
                             if autoSetup then equipAllDamage() end
                             task.wait(1)
-                            game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Dungeon Medium", "Join")
+                            rp:FireServer("Gamemodes", "Dungeon Medium", "Join")
                         end
                     end
                 end)
@@ -1010,7 +1017,7 @@ Gm:CreateToggle({
                             lastJoinRaid = os.time()
                             if autoSetup then equipAllDamage() end
                             task.wait(1)
-                            game:GetService("ReplicatedStorage").Remotes.Signal:FireServer("Gamemodes", "Raid", "Join")
+                            rp:FireServer("Gamemodes", "Raid", "Join")
                         end
                     end
                 end)
@@ -1034,7 +1041,7 @@ Gm:CreateToggle({
                     if not Modes("Infinite Castle") then
                         if autoSetup then equipAllDamage() end
                         task.wait(1)
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer("Gamemodes", "Infinite Castle", "Start_Queue", 1)
+                        rp:FireServer("Gamemodes", "Infinite Castle", "Start_Queue", 1)
                     end
                 end)
                 task.wait(5)
@@ -1042,19 +1049,6 @@ Gm:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTO_JOIN_INFINITE")
-
-local CODES = {"DAILYREWARD9", "TELEPORTFIX", "THX5MVISITS", "DAILYREWARD9", "DAILYREWARD8", "MINIUPD2.5", "DAILYREWARD7", "20KLIKES", "UPD2.2QOL", "DAILYREWARD6", "UPD2QOL", "AVATARBUGS", "RELEASE", "TESTERREWARD", "1KLIKES", "5KMEMBERSDC", "SRRY4DELAY", "5KFAVS", "RAIDTELEPORT", "ACCESSORYTYPE", "FIXEDMERCHANT", "THX4KACTIVES", "2.5KLIKES", "FIXEDINDEX", "THX5KACTIVES", "SRRY4SHUTDOWN", "PASSIVEUPDATE", "UPDATE1", "5KLIKES", "4KFAVORITES", "LEVELUPGRADEFIXED", "10KLIKES", "AVATARBUGS", "10KLIKES", "5KFAVS", "DAILYREWARD", "POWERARENA", "SORRYFORDELAY", "FIXEDMOBILE", "DAILYREWARD3", "DAILYREWARD2", "DAILYREWARD4", "15KLIKES", "THX8KACTIVES", "DAILYREWARD5", "GACHIAKUTA", "GACHIAKUTADELAY", "THX10KACTIVES", "RELEASEPART2", "THEDEVGOAT", "FIXEDPASSIVEINTERACT"}
-Up:CreateButton({
-    Name = "Redeem Codes",
-    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
-    Style = 1,
-    CenterContent = true,
-    Callback = function()
-        for _, code in ipairs(CODES) do
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer("General", "Codes", "Claim", code)
-        end
-    end,
-}, "BB_CODES")
 
 local afkModeEnabled = false
 ConfigMisc:CreateToggle({
