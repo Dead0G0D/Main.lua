@@ -12,7 +12,6 @@ end
 
 local Starlight = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/starlight"))()
 local NebulaIcons = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/nebula-icon-library-loader"))()
-Starlight.WindowKeybind = Enum.KeyCode.RightControl
 
 MarketplaceService = game:GetService("MarketplaceService")
 PlaceId = game.PlaceId
