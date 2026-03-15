@@ -67,25 +67,25 @@ local Up = MainTab:CreateGroupbox({
     Column = 1,
 }, "GB_UPGRADES")
 
-local Modes = MS:CreateTab({
+local GMS = MS:CreateTab({
     Name = "| Gamemodes",
     Icon = "114022464350371", --"115111586638831", --77630928106024,
     Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
-local GamemodeBox = Modes:CreateGroupbox({
+local GamemodeBox = GMS:CreateGroupbox({
     Name = "Auto Modes",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
     Column = 1,
 }, "GB_AUTOFARMMODES")
 
-local SV = Modes:CreateGroupbox({
+local SV = GMS:CreateGroupbox({
     Name = "Save Position",
     Icon = NebulaIcons:GetIcon('map', 'Phosphor'),
     Column = 1,
 }, "GB_SVMODES")
 
-local Gm = Modes:CreateGroupbox({
+local Gm = GMS:CreateGroupbox({
     Name = "Join/Leave",
     Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
     Column = 1,
@@ -355,7 +355,7 @@ local Atc = AutoFarmBox:CreateToggle({
 }, "TOGGLE_AUTOCLICK")
 
 local NpcDropdown = NpcAutoFarm:AddDropdown({
-    Options = GetUniqueEnemyNames(selectedWorldName),
+    Options = GetUniqueEnemyNames(),
     CurrentOptions = {},
     Placeholder = "Select NPCs",
     MultipleOptions = true,
@@ -365,7 +365,7 @@ local NpcDropdown = NpcAutoFarm:AddDropdown({
 }, "DD_NPC_SELECT")
 
 local PriorityDropdown = NpcAutoFarm:AddDropdown({
-    Options = GetUniqueEnemyNames(selectedWorldName),
+    Options = GetUniqueEnemyNames(),
     CurrentOptions = {},
     Placeholder = "Priority NPCs",
     MultipleOptions = true,
@@ -380,7 +380,7 @@ AutoFarmBox:CreateButton({
     Style = 1,
     CenterContent = true,
     Callback = function()
-        local names = GetUniqueEnemyNames(selectedWorldName)
+        local names = GetUniqueEnemyNames()
         NpcDropdown:Set({Options = names, CurrentOptions = {}})
         PriorityDropdown:Set({Options = names, CurrentOptions = {}})
     end,
@@ -393,7 +393,7 @@ end
 
 local petroll = stars[1] or ""
 local autopetroll = false
-local autopetroll = Up:CreateToggle({
+local AutoPet = Up:CreateToggle({
     Name = "Star Roll",
     Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
     CurrentValue = false,
@@ -413,7 +413,7 @@ local autopetroll = Up:CreateToggle({
     end,
 }, "TOGGLE_PETROLL")
 
-autopetroll:AddDropdown({
+AutoPet:AddDropdown({
     Options = stars,
     CurrentOptions = {stars[1]},
     Callback = function(Options)
