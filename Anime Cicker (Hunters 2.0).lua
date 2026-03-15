@@ -68,7 +68,7 @@ local GMS = MS:CreateTab({
               --Groupboxs--
 local GamemodeBox = GMS:CreateGroupbox({
     Name = "Auto Modes",
-    Icon = NebulaIcons:GetIcon('repeat-1', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('repeat-1', 'Lucide'),
     Column = 1,
 }, "GB_AUTOFARMMODES")
 
@@ -592,13 +592,13 @@ local function updateEventParagraph(paragraph, hour, min, sec)
     local easyTimer = timeToNext({0})
     local mediumTimer = timeToNext({30})
     local TeasyTimer = timeToNext({5,35})
-    local TmediumTimer = timeToNext({20,50})
+    local TmediumTimer = timeToNext({20,55})
     
     local text =
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
         "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer .. "\n" ..
         "Trial Easy Open: XX:05 & XX:35\nNext In: " .. TeasyTimer .. "\n" ..
-        "Trial Medium Open: XX:20 & XX:50\nNext In: " .. TmediumTimer .. "\n" ..
+        "Trial Medium Open: XX:20 & XX:55\nNext In: " .. TmediumTimer .. "\n" ..
         "Raids Open: XX:15 & XX:45\nNext In: " .. raidTimer
 
     paragraph:Set({Content = text})
@@ -614,8 +614,8 @@ task.spawn(function()
         task.wait(1)
     end
 end)
-GamemodeBox:CreateDivider()
 
+GamemodeBox:CreateDivider()
 local modeFarm = false
 GamemodeBox:CreateToggle({
     Name = "Auto Farm Modes",
