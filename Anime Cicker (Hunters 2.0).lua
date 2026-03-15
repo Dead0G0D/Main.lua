@@ -1173,4 +1173,4 @@ Starlight:Notification({
     Duration = 5,
     Content = "You're now using NullHub, baby.\nScript loaded Successfully."
 }, "SCTS")
-print("Script Loaded!")kg
+print("Script Loaded!")
