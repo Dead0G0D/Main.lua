@@ -344,7 +344,7 @@ AutoFarmBox:CreateButton({
     end,
 }, "BTN_REFRESH_NPCS")
 
-local rp = rp
+local rp = game:GetService("ReplicatedStorage").Remotes.Signal
 local ac = false
 local Atc = Pl:CreateToggle({
     Name = "Auto Click",
