@@ -148,7 +148,9 @@ Theme:BuildThemeGroupbox(1)
 Config:BuildConfigGroupbox(1)
 
 local textsToFind = {
-    "[RANK UP] You don't have enough Power!"
+    "[RANK UP] You don't have enough Power!",
+    "You don't have enough points!",
+    "[RANK UP] You don't have enough Crystals!"
 }
 local function removeNotifications()
     local player = game:GetService("Players").LocalPlayer
