@@ -44,7 +44,7 @@ local MainTab = MS:CreateTab({
                --Groupboxs--
 local AutoFarmBox = MainTab:CreateGroupbox({
     Name = "Auto Farm",
-    Icon = NebulaIcons:GetIcon('swords', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('repeat-1', 'Lucide'),
     Column = 1,
 }, "GB_AUTOFARM")
               --Groupboxs--
@@ -68,7 +68,7 @@ local GMS = MS:CreateTab({
               --Groupboxs--
 local GamemodeBox = GMS:CreateGroupbox({
     Name = "Auto Modes",
-    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('repeat-1', 'Phosphor'),
     Column = 1,
 }, "GB_AUTOFARMMODES")
 
@@ -80,7 +80,7 @@ local SV = GMS:CreateGroupbox({
 
 local Gm = GMS:CreateGroupbox({
     Name = "Join/Leave",
-    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('arrow-right-left', 'Lucide'),
     Column = 1,
 }, "GB_JLMODES")
 
@@ -234,7 +234,7 @@ local currentTargetID = nil
 
 local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Name = "Auto Farm Enemy",
-    Icon = NebulaIcons:GetIcon('user-x', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('user-x', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -591,11 +591,15 @@ local function updateEventParagraph(paragraph, hour, min, sec)
     local raidTimer = timeToNext({15, 45})
     local easyTimer = timeToNext({0})
     local mediumTimer = timeToNext({30})
-
+    local TeasyTimer = timeToNext({5,35})
+    local TmediumTimer = timeToNext({20,50})
+    
     local text =
-        "Raids Open: XX:15 & XX:45\nNext In: " .. raidTimer .. "\n" ..
         "Dungeon Easy Open: XX:00\nNext In: " .. easyTimer .. "\n" ..
-        "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer
+        "Dungeon Medium Open: XX:30\nNext In: " .. mediumTimer .. "\n" ..
+        "Trial Easy Open: XX:05 & XX:35\nNext In: " .. TeasyTimer .. "\n" ..
+        "Trial Medium Open: XX:20 & XX:50\nNext In: " .. TmediumTimer .. "\n" ..
+        "Raids Open: XX:15 & XX:45\nNext In: " .. raidTimer
 
     paragraph:Set({Content = text})
 end
