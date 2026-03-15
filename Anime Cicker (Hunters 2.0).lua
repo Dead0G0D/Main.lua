@@ -44,13 +44,13 @@ local MainTab = MS:CreateTab({
                --Groupboxs--
 local AutoFarmBox = MainTab:CreateGroupbox({
     Name = "Auto Farm",
-    Icon = NebulaIcons:GetIcon('refresh-ccw-dot', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('swords', 'Lucide'),
     Column = 1,
 }, "GB_AUTOFARM")
               --Groupboxs--
 local Pl = MainTab:CreateGroupbox({
     Name = "Player",
-    Icon = NebulaIcons:GetIcon('user', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('user-round-cog', 'Lucide'),
     Column = 1,
 }, "GB_PLMISC")
 
@@ -234,7 +234,7 @@ local currentTargetID = nil
 
 local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Name = "Auto Farm Enemy",
-    Icon = NebulaIcons:GetIcon('sword', 'Phosphor'),
+    Icon = NebulaIcons:GetIcon('user-x', 'Phosphor'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -383,7 +383,7 @@ local Atc = Pl:CreateToggle({
 local upp = false
 local up1 = Pl:CreateToggle({
     Name = "Auto Rankup",
-    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('panel-bottom-open', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -446,7 +446,7 @@ Pl:CreateToggle({
 local CODES = {"DAILYREWARD9", "TELEPORTFIX", "THX5MVISITS", "DAILYREWARD9", "DAILYREWARD8", "MINIUPD2.5", "DAILYREWARD7", "20KLIKES", "UPD2.2QOL", "DAILYREWARD6", "UPD2QOL", "AVATARBUGS", "RELEASE", "TESTERREWARD", "1KLIKES", "5KMEMBERSDC", "SRRY4DELAY", "5KFAVS", "RAIDTELEPORT", "ACCESSORYTYPE", "FIXEDMERCHANT", "THX4KACTIVES", "2.5KLIKES", "FIXEDINDEX", "THX5KACTIVES", "SRRY4SHUTDOWN", "PASSIVEUPDATE", "UPDATE1", "5KLIKES", "4KFAVORITES", "LEVELUPGRADEFIXED", "10KLIKES", "AVATARBUGS", "10KLIKES", "5KFAVS", "DAILYREWARD", "POWERARENA", "SORRYFORDELAY", "FIXEDMOBILE", "DAILYREWARD3", "DAILYREWARD2", "DAILYREWARD4", "15KLIKES", "THX8KACTIVES", "DAILYREWARD5", "GACHIAKUTA", "GACHIAKUTADELAY", "THX10KACTIVES", "RELEASEPART2", "THEDEVGOAT", "FIXEDPASSIVEINTERACT"}
 Pl:CreateButton({
     Name = "Redeem Codes",
-    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('book-copy', 'Lucide'),
     Style = 1,
     CenterContent = true,
     Callback = function()
