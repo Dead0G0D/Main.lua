@@ -415,6 +415,47 @@ Pl:CreateButton({
     end,
 }, "BB_CODES")
 
+local timerLabel = LocalPlayer.PlayerGui.UI.Frames.TimeRewards.Background.BarFrame.Main.ResetTimer.Value
+local RT = Pl:CreateParagraph({
+    Name = "Rewards Timer",
+    Icon = NebulaIcons:GetIcon('clock-fading', 'Lucide'),
+    Content = "Loading...",
+}, "PARA_REWARDSTIMER")
+
+timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
+    RT:Set({Content = "Next reset: " .. tostring(timerLabel.Text})
+end)
+
+local AUTOTR = false
+Pl:CreateToggle({
+    Name = "Auto Collect TimeRewards",
+    Icon = NebulaIcons:GetIcon('time', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        AUTOTR = Value
+        if not Value then return end
+        task.spawn(function()
+            while AUTOTR do
+                pcall(function()
+                    local holder = LocalPlayer.PlayerGui.UI.Frames.TimeRewards.Background.Holder
+                    for i = 1, 7 do
+                    local btn = holder:FindFirstChild(tostring(i))
+                    if btn and btn:FindFirstChild("Button") and btn.Button:FindFirstChild("CanClaim") then
+                        if btn.Button.CanClaim.Visible then
+                            local args = {"General", "TimeRewards", "Claim", i}
+                            rp:FireServer(unpack(args))
+                            task.wait(0.1)
+                          end
+                      end
+                  end
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_AUTOTR")
+
 local stars = {}
 for _, star in ipairs(game:GetService("ReplicatedStorage").Shared.Stars:GetChildren()) do
     table.insert(stars, star.Name)
@@ -522,7 +563,6 @@ up3:AddDropdown({
         selectedGachas = Options or {}
     end,
 }, "DD_UP3")
-
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Dungeon Timers",
