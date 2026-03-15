@@ -1051,7 +1051,7 @@ Up:CreateButton({
     CenterContent = true,
     Callback = function()
         for _, code in ipairs(CODES) do
-            Signal:FireServer("General", "Codes", "Claim", code)
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Signal"):FireServer("General", "Codes", "Claim", code)
         end
     end,
 }, "BB_CODES")
