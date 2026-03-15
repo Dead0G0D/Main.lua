@@ -402,34 +402,21 @@ local up1 = Pl:CreateToggle({
     end,
 }, "TOGGLE_RANKUP")
 
-local CODES = {"DAILYREWARD9", "TELEPORTFIX", "THX5MVISITS", "DAILYREWARD9", "DAILYREWARD8", "MINIUPD2.5", "DAILYREWARD7", "20KLIKES", "UPD2.2QOL", "DAILYREWARD6", "UPD2QOL", "AVATARBUGS", "RELEASE", "TESTERREWARD", "1KLIKES", "5KMEMBERSDC", "SRRY4DELAY", "5KFAVS", "RAIDTELEPORT", "ACCESSORYTYPE", "FIXEDMERCHANT", "THX4KACTIVES", "2.5KLIKES", "FIXEDINDEX", "THX5KACTIVES", "SRRY4SHUTDOWN", "PASSIVEUPDATE", "UPDATE1", "5KLIKES", "4KFAVORITES", "LEVELUPGRADEFIXED", "10KLIKES", "AVATARBUGS", "10KLIKES", "5KFAVS", "DAILYREWARD", "POWERARENA", "SORRYFORDELAY", "FIXEDMOBILE", "DAILYREWARD3", "DAILYREWARD2", "DAILYREWARD4", "15KLIKES", "THX8KACTIVES", "DAILYREWARD5", "GACHIAKUTA", "GACHIAKUTADELAY", "THX10KACTIVES", "RELEASEPART2", "THEDEVGOAT", "FIXEDPASSIVEINTERACT"}
-Pl:CreateButton({
-    Name = "Redeem Codes",
-    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
-    Style = 1,
-    CenterContent = true,
-    Callback = function()
-        for _, code in ipairs(CODES) do
-            rp:FireServer("General", "Codes", "Claim", code)
-        end
-    end,
-}, "BB_CODES")
-
 local timerLabel = LocalPlayer.PlayerGui.UI.Frames.TimeRewards.Background.BarFrame.Main.ResetTimer.Value
 local RT = Pl:CreateParagraph({
-    Name = "Rewards Timer",
-    Icon = NebulaIcons:GetIcon('clock-fading', 'Lucide'),
+    Name = "Rest Rewards Timer",
+    Icon = NebulaIcons:GetIcon('timer-reset', 'Lucide'),
     Content = "Loading...",
 }, "PARA_REWARDSTIMER")
 
 timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
-    RT:Set({Content = "Next reset: " .. tostring(timerLabel.Text)})
+    RT:Set({Content = "Next reset in " .. tostring(timerLabel.Text)})
 end)
 
 local AUTOTR = false
 Pl:CreateToggle({
     Name = "Auto Collect TimeRewards",
-    Icon = NebulaIcons:GetIcon('time', 'Lucide'),
+    Icon = NebulaIcons:GetIcon('calendar-check', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
@@ -455,6 +442,19 @@ Pl:CreateToggle({
         end)
     end,
 }, "TOGGLE_AUTOTR")
+
+local CODES = {"DAILYREWARD9", "TELEPORTFIX", "THX5MVISITS", "DAILYREWARD9", "DAILYREWARD8", "MINIUPD2.5", "DAILYREWARD7", "20KLIKES", "UPD2.2QOL", "DAILYREWARD6", "UPD2QOL", "AVATARBUGS", "RELEASE", "TESTERREWARD", "1KLIKES", "5KMEMBERSDC", "SRRY4DELAY", "5KFAVS", "RAIDTELEPORT", "ACCESSORYTYPE", "FIXEDMERCHANT", "THX4KACTIVES", "2.5KLIKES", "FIXEDINDEX", "THX5KACTIVES", "SRRY4SHUTDOWN", "PASSIVEUPDATE", "UPDATE1", "5KLIKES", "4KFAVORITES", "LEVELUPGRADEFIXED", "10KLIKES", "AVATARBUGS", "10KLIKES", "5KFAVS", "DAILYREWARD", "POWERARENA", "SORRYFORDELAY", "FIXEDMOBILE", "DAILYREWARD3", "DAILYREWARD2", "DAILYREWARD4", "15KLIKES", "THX8KACTIVES", "DAILYREWARD5", "GACHIAKUTA", "GACHIAKUTADELAY", "THX10KACTIVES", "RELEASEPART2", "THEDEVGOAT", "FIXEDPASSIVEINTERACT"}
+Pl:CreateButton({
+    Name = "Redeem Codes",
+    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        for _, code in ipairs(CODES) do
+            rp:FireServer("General", "Codes", "Claim", code)
+        end
+    end,
+}, "BB_CODES")
 
 local stars = {}
 for _, star in ipairs(game:GetService("ReplicatedStorage").Shared.Stars:GetChildren()) do
