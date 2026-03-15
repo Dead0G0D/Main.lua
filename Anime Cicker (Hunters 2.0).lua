@@ -423,7 +423,7 @@ local RT = Pl:CreateParagraph({
 }, "PARA_REWARDSTIMER")
 
 timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
-    RT:Set({Content = "Next reset: " .. tostring(timerLabel.Text})
+    RT:Set({Content = "Next reset: " .. tostring(timerLabel.Text)})
 end)
 
 local AUTOTR = false
