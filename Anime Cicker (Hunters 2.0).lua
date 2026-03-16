@@ -761,7 +761,6 @@ end
 local function tpback()
     if hasJustTeleported then return end
     hasJustTeleported = true
-    
     if SvPosition then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
