@@ -118,7 +118,63 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 
+local rp = game:GetService("ReplicatedStorage"):WaitForChild("simpledeev_Framework"):WaitForChild("Library"):WaitForChild("Network"):WaitForChild("Events")
 
+local ac = false
+local Atc = Pl:CreateToggle({
+    Name = "Auto Click",
+    Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        ac = Value
+        if not Value then return end
+        task.spawn(function()
+            while ac do
+                pcall(function()
+                      rp:WaitForChild("Click"):FireServer()
+                  end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_AUTOCLICK")
+
+--("OpenEgg"):FireServer(unpack(args))
+
+local stars = {}
+for _, star in ipairs(game:GetService("ReplicatedStorage").Shared.Stars:GetChildren()) do
+    table.insert(stars, star.Name)
+end
+
+local petroll = stars[1] or ""
+local autopetroll = false
+local AutoPet = Up:CreateToggle({
+    Name = "Star Open",
+    Icon = NebulaIcons:GetIcon('star', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autopetroll = Value
+        if not Value then return end
+        task.spawn(function()
+            while autopetroll do
+                pcall(function()
+                    rp:("OpenEgg"):FireServer(petroll)
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_PETROLL")
+
+AutoPet:AddDropdown({
+    Options = stars,
+    CurrentOptions = {stars[1]},
+    Callback = function(Options)
+        petroll = Options[1]
+    end,
+}, "DD_PETROLL")
 
 local speedValue = 70
 ConfigMisc:CreateInput({
