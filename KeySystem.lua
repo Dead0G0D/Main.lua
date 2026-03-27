@@ -10,7 +10,7 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 -- ══════════════════════════════════════════
 
 local SUPPORTED_GAMES = {
-    [92783581681786] = "https://raw.githubusercontent.com/latencyhub59-sys/Script/refs/heads/main/Anime%20Clicker.lua",
+    [92783581681786] = "https://raw.githubusercontent.com/Dead0G0D/Main.lua/refs/heads/main/Anime%20Cicker%20(Hunters%202.0).lua",
     -- [PLACE_ID] = "https://raw.githubusercontent.com/.../script.lua",
 }
 
