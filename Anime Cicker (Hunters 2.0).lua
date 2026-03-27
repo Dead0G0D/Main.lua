@@ -1,3 +1,4 @@
+
 getgenv().InterfaceName = "NULL"
 getgenv().SecureMode = true
 
@@ -22,7 +23,7 @@ GameName = ProductInfo.Name
 local Window = Starlight:CreateWindow({
     Name = string.format("Null Hub [%s] [%s]", device, executor),
     Subtitle = GameName,
-    Icon = "114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
+    Icon = "105433751946385", --"90421697308928", --"114022464350371", --"115111586638831", --"136362783020632",  --"116180233441379", --"101497542169555", --"77933017176374", --"125967972654762",
     DefaultSize = UDim2.fromOffset(540, 540),
     PlayerInfoBlur = true,
     PlayerStatus = true,
@@ -33,7 +34,7 @@ local Window = Starlight:CreateWindow({
     
     LoadingSettings = {
         Title = "Null Hub Entertainments",
-        Subtitle = "Welcome to Null Hub, Baby.",
+        Subtitle = "Welcome to Null Hub Baby.",
     },
   
     FileSettings = {
@@ -46,7 +47,7 @@ local SS = Window:CreateTabSection("SETTINGS")
 
 local MainTab = MS:CreateTab({
     Name = "| Main",
-    Icon = "114022464350371",
+    Icon = "90421697308928",
     Columns = 1,
 }, "TAB_MAIN")
                --Groupboxs--
@@ -70,7 +71,7 @@ local Up = MainTab:CreateGroupbox({
 
 local GMS = MS:CreateTab({
     Name = "| Gamemodes",
-    Icon = "114022464350371",
+    Icon = "90421697308928",
     Columns = 1,
 }, "TAB_GM")
               --Groupboxs--
@@ -117,6 +118,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
+local Workspace = game:GetService("Workspace")
 
 local function removeNotifications()
     local notifications = LocalPlayer.PlayerGui:WaitForChild("Plus"):WaitForChild("Notifications")
@@ -1243,19 +1245,36 @@ ConfigMisc:CreateToggle({
     end,
 }, "TOGGLE_APPLY_SPEED")
 
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if applySpeedActive then
-        task.wait(0.5)
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = speedValue
-        end
+local antiAfkActive = false
+ConfigMisc:CreateToggle({
+    Name = "Anti AFK",
+    Icon = NebulaIcons:GetIcon('shield-check', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        antiAfkActive = Value
+    end,
+}, "TOGGLE_ANTI_AFK")
+
+local function simulateActivity()
+    local camera = Workspace.CurrentCamera
+    if not camera then return end
+    
+    VirtualUser:Button2Down(Vector2.zero, camera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.zero, camera.CFrame)
+end
+
+LocalPlayer.Idled:Connect(function()
+    if antiAfkActive then
+        simulateActivity()
+        print("Null System • Player successfully un-idled ✓")
     end
 end)
 
 local afkModeEnabled = false
 ConfigMisc:CreateToggle({
-    Name = "AFK Mode",
+    Name = "Visual for AfkFarm",
     Icon = NebulaIcons:GetIcon('monitor-off', 'Lucide'),
     CurrentValue = false,
     Style = 2,
@@ -1359,7 +1378,7 @@ ConfigMisc:CreateToggle({
 }, "TOGGLE_AFK_MODE")
 
 Starlight:OnDestroy(function()
-    print("Script Deleted")
+    print("Null System • Script Deleted")
 end)
 
 Starlight:LoadAutoloadConfig()
@@ -1368,6 +1387,6 @@ Starlight:Notification({
     Title = "Script Status",
     Icon = "114022464350371",
     Duration = 5,
-    Content = "You're now using NullHub, Baby.\nScript loaded Successfully."
+    Content = " • You're now using NullHub, baby.\n • Script loaded Successfully."
 }, "SCTS")
-print("Script Loaded!")
+print("Null System • Script Loaded!")
