@@ -119,6 +119,14 @@ local LocalPlayer = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 local Workspace = game:GetService("Workspace")
 
+local function Modes()
+    local dungeon = LocalPlayer.PlayerGui:FindFirstChild("Main")
+    dungeon = dungeon and dungeon:FindFirstChild("HUD")
+    dungeon = dungeon and dungeon:FindFirstChild("Dungeon")
+    if not dungeon then return false end
+    return dungeon.Visible
+end
+
 local selectedWorld = "World1"
 
 local WorldLabel = AutoFarmBox:CreateLabel({
@@ -167,7 +175,11 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
 
         task.spawn(function()
             while farmRunning do
-
+                if Modes() then
+                    task.wait(0.5)
+                    continue
+                end
+                
                 if not selectedNpcNames or #selectedNpcNames == 0 then
                     task.wait(0.5)
                     continue
@@ -467,6 +479,61 @@ Pl:CreateButton({
         end
     end,
 }, "BB_CODES")
+
+local modeFarm = false
+GamemodeBox:CreateToggle({
+    Name = "Auto Farm Modes",
+    Icon = NebulaIcons:GetIcon('user-cog', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        modeFarm = Value
+        if not Value then return end
+
+        task.spawn(function()
+            while modeFarm do
+                if not Modes() then
+                    task.wait(0.5)
+                    continue
+                end
+
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if not hrp then
+                    task.wait(0.5)
+                    continue
+                end
+
+                local target = nil
+                for _, enemy in ipairs(workspace:GetDescendants()) do
+                    if enemy:IsA("Model") and enemy:GetAttribute("IsEnemyRaid") == true and enemy:GetAttribute("Attackable") == true then
+                        target = enemy
+                        break
+                    end
+                end
+
+                if target then
+                    repeat
+                        if not modeFarm or not target.Parent or target:GetAttribute("Attackable") == false then break end
+                        if not Modes() then break end
+
+                        char = LocalPlayer.Character
+                        hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if not hrp then break end
+
+                        hrp.CFrame = CFrame.new(target:GetPivot().Position + Vector3.new(0, 2.5, 2.5))
+
+                        RunService.Heartbeat:Wait()
+                    until target:GetAttribute("Attackable") == false or not target.Parent
+
+                    task.wait(0.1)
+                else
+                    task.wait(0.5)
+                end
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_FARM_MODES")
 
 local speedValue = 70
 ConfigMisc:CreateInput({
