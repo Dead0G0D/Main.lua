@@ -119,14 +119,32 @@ local LocalPlayer = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 local Workspace = game:GetService("Workspace")
 
+local selectedWorld = "World1"
+
+local WorldLabel = AutoFarmBox:CreateLabel({
+    Name = "Select World",
+    Icon = NebulaIcons:GetIcon('globe', 'Lucide'),
+}, "LABEL_WORLD")
+
+WorldLabel:AddDropdown({
+    Options = {"World1", "World2", "World3", "World4"},
+    CurrentOptions = {"World1"},
+    Callback = function(Options)
+        selectedWorld = Options[1] or "World1"
+    end,
+}, "DD_WORLD_SELECT")
+
 local function GetUniqueEnemyNames()
     local names = {}
-    for _, enemy in ipairs(workspace.Server:GetDescendants()) do
-        if enemy:IsA("BasePart") and enemy:GetAttribute("Health") and enemy:GetAttribute("ID") then
+    local world = workspace:FindFirstChild(selectedWorld)
+    if not world then return {} end
+
+    for _, enemy in ipairs(world:GetDescendants()) do
+        if enemy:IsA("Model") and enemy:GetAttribute("Attackable") then
             names[enemy.Name] = true
         end
     end
-    
+
     local uniqueList = {}
     for name in pairs(names) do
         table.insert(uniqueList, name)
@@ -137,7 +155,6 @@ end
 local farmRunning = false
 local selectedNpcNames = {}
 local priorityEnemyNames = {}
-local currentTargetID = nil
 
 local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Name = "Auto Farm Enemy",
@@ -146,33 +163,26 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
     Style = 2,
     Callback = function(Value)
         farmRunning = Value
-        if Value then 
-          Starlight.Window.SetPlayerStatus("Farming")
-          else
-          Starlight.Window.SetPlayerStatus("Running")
-        end
-        
-        if not Value then
-            currentTargetID = nil
-            return
-        end
-        
+        if not Value then return end
+
         task.spawn(function()
             while farmRunning do
-                if Modes() then
+
+                if not selectedNpcNames or #selectedNpcNames == 0 then
                     task.wait(0.5)
                     continue
                 end
-                
-                if not selectedNpcNames or #selectedNpcNames == 0 then
+
+                local world = workspace:FindFirstChild(selectedWorld)
+                if not world then
                     task.wait(0.5)
                     continue
                 end
 
                 local hasPriorityAlive = false
                 if priorityEnemyNames and #priorityEnemyNames > 0 then
-                    for _, enemy in ipairs(workspace.Server:GetDescendants()) do
-                        if enemy:IsA("BasePart") and table.find(priorityEnemyNames, enemy.Name) and enemy:GetAttribute("Died") ~= true then
+                    for _, enemy in ipairs(world:GetDescendants()) do
+                        if enemy:IsA("Model") and table.find(priorityEnemyNames, enemy.Name) and enemy:GetAttribute("Attackable") == true then
                             hasPriorityAlive = true
                             break
                         end
@@ -180,29 +190,30 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                 end
 
                 local namesToFarm = hasPriorityAlive and priorityEnemyNames or selectedNpcNames
+
                 for _, enemyName in ipairs(namesToFarm) do
                     if not farmRunning then break end
-                    
-                    local target = nil
+
                     local char = LocalPlayer.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
                     if not hrp then continue end
-                    
-                    for _, enemy in ipairs(workspace.Server:GetDescendants()) do
-                        if enemy:IsA("BasePart") and enemy.Name == enemyName and enemy:GetAttribute("Died") ~= true and enemy:GetAttribute("Health") and enemy:GetAttribute("ID") then
+
+                    local target = nil
+                    for _, enemy in ipairs(world:GetDescendants()) do
+                        if enemy:IsA("Model") and enemy.Name == enemyName and enemy:GetAttribute("Attackable") == true then
                             target = enemy
                             break
                         end
                     end
 
                     if target then
-                        currentTargetID = target:GetAttribute("ID")
                         repeat
-                            if not farmRunning or not target.Parent or target:GetAttribute("Died") == true then break end
+                            if not farmRunning or not target.Parent or target:GetAttribute("Attackable") == false then break end
+
                             if priorityEnemyNames and #priorityEnemyNames > 0 and not table.find(priorityEnemyNames, enemyName) then
                                 local prioritySpawned = false
-                                for _, enemy in ipairs(workspace.Server:GetDescendants()) do
-                                    if enemy:IsA("BasePart") and table.find(priorityEnemyNames, enemy.Name) and enemy:GetAttribute("Died") ~= true then
+                                for _, enemy in ipairs(world:GetDescendants()) do
+                                    if enemy:IsA("Model") and table.find(priorityEnemyNames, enemy.Name) and enemy:GetAttribute("Attackable") == true then
                                         prioritySpawned = true
                                         break
                                     end
@@ -214,10 +225,9 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             hrp = char and char:FindFirstChild("HumanoidRootPart")
                             if not hrp then break end
                             hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2.5, 2.5))
-                            
+
                             RunService.Heartbeat:Wait()
-                        until target:GetAttribute("Died") == true or not target.Parent
-                        currentTargetID = nil
+                        until target:GetAttribute("Attackable") == false or not target.Parent
                     end
                     task.wait(0.1)
                 end
@@ -258,8 +268,34 @@ AutoFarmBox:CreateButton({
     end,
 }, "BTN_REFRESH_NPCS")
 
-game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
+local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
+local ac = false
+local Atc = AutoFarmBox:CreateToggle({
+    Name = "Auto Click",
+    Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        ac = Value
+        if not Value then return end
+        task.spawn(function()
+            while ac do
+                pcall(function()
+                rp:WaitForChild("Clicked"):FireServer()
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_AUTOCLICK")
 
+--game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
+
+--local args = {
+	--"Star1",
+--1
+--}
+--game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Eggs"):WaitForChild("Hatch"):InvokeServer(unpack(args))
 
 local speedValue = 70
 ConfigMisc:CreateInput({
