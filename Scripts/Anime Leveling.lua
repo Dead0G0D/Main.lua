@@ -380,6 +380,64 @@ up2:AddDropdown({
     end,
 }, "DD_UP2")
 --game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
+local GACHA_REMOTES = {
+    ["Dragon Ball Power"] = rp:WaitForChild("RollDragonBallPower"),
+    ["Saiyan Power"]      = rp:WaitForChild("RollSaiyanPower"),
+    ["Avocado"]   = rp:WaitForChild("RollAvocadoPower"),
+    ["Breathing"] = rp:WaitForChild("RollBreathingPower"),
+    ["Dagger"]    = rp:WaitForChild("RollDaggerPower"),
+    ["Farm"]      = rp:WaitForChild("RollFarmPower"),
+    ["Fruit"]     = rp:WaitForChild("RollFruitPower"),
+    ["Grimoires"] = rp:WaitForChild("RollGrimoiresPower"),
+    ["Jungle"]    = rp:WaitForChild("RollJunglePower"),
+    ["Lava"]      = rp:WaitForChild("RollLavaPower"),
+    ["Pet"]       = rp:WaitForChild("RollPetPower"),
+    ["Robot"]     = rp:WaitForChild("RollRobotPower"),
+    ["Saturn"]    = rp:WaitForChild("RollSaturnPower"),
+}
+
+local gachaNames = {}
+for name in pairs(GACHA_REMOTES) do
+    table.insert(gachaNames, name)
+end
+
+local selectedGachas = {}
+local upp3 = false
+
+local up3 = Up:CreateToggle({
+    Name = "Auto Roll Gachas",
+    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        upp3 = Value
+        if not Value then return end
+        task.spawn(function()
+            while upp3 do
+                if selectedGachas and #selectedGachas > 0 then
+                    for _, gacha in ipairs(selectedGachas) do
+                        pcall(function()
+                            local remote = GACHA_REMOTES[gacha]
+                            if remote then
+                                remote:FireServer()
+                            end
+                        end)
+                    end
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_Up3")
+
+up3:AddDropdown({
+    Options = gachaNames,
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Callback = function(Options)
+        selectedGachas = Options or {}
+    end,
+}, "DD_UP3")
 
 local CODES = {"Leveling", "Release", "Hype", "1K CCU"}
 Pl:CreateButton({
