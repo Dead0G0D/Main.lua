@@ -350,6 +350,19 @@ autopetroll:AddDropdown({
 }, "DD_PETROLL")
 --game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
 
+local CODES = {"Leveling", "Release", "Hype", "1K CCU"}
+Pl:CreateButton({
+    Name = "Redeem Codes",
+    Icon = NebulaIcons:GetIcon('book-copy', 'Lucide'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        for _, code in ipairs(CODES) do
+            rp:WaitForChild("RedeemCode"):InvokeServer(code)
+        end
+    end,
+}, "BB_CODES")
+
 local speedValue = 70
 ConfigMisc:CreateInput({
     Name = "Set Speed",
