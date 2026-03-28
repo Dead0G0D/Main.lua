@@ -128,9 +128,9 @@ local WorldLabel = AutoFarmBox:CreateLabel({
 
 WorldLabel:AddDropdown({
     Options = {"World1", "World2", "World3", "World4"},
-    CurrentOptions = {"World1"},
+    CurrentOptions = {},
     Callback = function(Options)
-        selectedWorld = Options[1] or "World1"
+        selectedWorld = Options
     end,
 }, "DD_WORLD_SELECT")
 
@@ -224,7 +224,7 @@ local NpcAutoFarm = AutoFarmBox:CreateToggle({
                             char = LocalPlayer.Character
                             hrp = char and char:FindFirstChild("HumanoidRootPart")
                             if not hrp then break end
-                            hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2.5, 2.5))
+                            hrp.CFrame = CFrame.new(target:GetPivot().Position + Vector3.new(0, 2.5, 2.5))
 
                             RunService.Heartbeat:Wait()
                         until target:GetAttribute("Attackable") == false or not target.Parent
@@ -270,7 +270,7 @@ AutoFarmBox:CreateButton({
 
 local rp = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
 local ac = false
-local Atc = AutoFarmBox:CreateToggle({
+local Atc = Pl:CreateToggle({
     Name = "Auto Click",
     Icon = NebulaIcons:GetIcon('cursor-click', 'Phosphor'),
     CurrentValue = false,
@@ -289,13 +289,66 @@ local Atc = AutoFarmBox:CreateToggle({
     end,
 }, "TOGGLE_AUTOCLICK")
 
---game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
+local autoEquip = false
+Pl:CreateToggle({
+    Name = "Auto Equip Best Accessories",
+    Icon = NebulaIcons:GetIcon('gem', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoEquip = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoEquip do
+                pcall(function()
+                    rp.Accessories.EquipBestAccessories:FireServer()
+                end)
+                task.wait(15)
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_EQUIP")
 
---local args = {
-	--"Star1",
---1
---}
---game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Eggs"):WaitForChild("Hatch"):InvokeServer(unpack(args))
+local islands = (function()
+    local list = {}
+    for _, v in ipairs(workspace.Stars:GetChildren()) do
+        local star = v:GetAttribute("star")
+        if star then
+            table.insert(list, star)
+        end
+    end
+    return list
+end)()
+
+local petroll = islands[1] or ""
+local autopetroll = false
+local autopetroll = Up:CreateToggle({
+    Name = "Pet Roll",
+    Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autopetroll = Value
+        if not Value then return end
+        task.spawn(function()
+            while autopetroll do
+                pcall(function()
+                rp:WaitForChild("Eggs"):WaitForChild("Hatch"):InvokeServer(petroll, 3)
+                end)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_PETROLL")
+
+autopetroll:AddDropdown({
+    Options = islands,
+    CurrentOptions = {islands[1]},
+    Callback = function(Options)
+        petroll = Options[1]
+    end,
+}, "DD_PETROLL")
+--game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
 
 local speedValue = 70
 ConfigMisc:CreateInput({
