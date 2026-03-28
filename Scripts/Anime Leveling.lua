@@ -439,6 +439,22 @@ up3:AddDropdown({
     end,
 }, "DD_UP3")
 
+Up:CreateButton({
+    Name = "Delete Gacha Animation",
+    Icon = NebulaIcons:GetIcon('trash-2', 'Lucide'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        pcall(function()
+            local main = LocalPlayer.PlayerGui.Main
+            local saiyan = main:FindFirstChild("SaiyanPowerGachaRoll")
+            local gacha = main:FindFirstChild("GachaRoll")
+            if saiyan then saiyan:Destroy() end
+            if gacha then gacha:Destroy() end
+        end)
+    end,
+}, "BTN_DELETE_GACHA_ANIM")
+
 local CODES = {"Leveling", "Release", "Hype", "1K CCU"}
 Pl:CreateButton({
     Name = "Redeem Codes",
