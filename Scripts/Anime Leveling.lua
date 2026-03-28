@@ -348,6 +348,37 @@ autopetroll:AddDropdown({
         petroll = Options[1]
     end,
 }, "DD_PETROLL")
+
+local selectedStat = "Energy"
+local upp2 = false
+local up2 = Up:CreateToggle({
+    Name = "Auto Up Stats",
+    Icon = NebulaIcons:GetIcon('chart-no-axes-combined', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        upp2 = Value
+        if not Value then return end
+        task.spawn(function()
+            while upp2 do
+                if selectedStat and selectedStat ~= "" then
+                    pcall(function()
+                        rp:WaitForChild("StatPoints"):FireServer(selectedStat, 1)
+                    end)
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_Up2")
+
+up2:AddDropdown({
+    Options = {"Energy", "Stars", "Luck", "Damage"},
+    CurrentOptions = {"Energy"},
+    Callback = function(Options)
+        selectedStat = Options[1] or "Energy"
+    end,
+}, "DD_UP2")
 --game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
 
 local CODES = {"Leveling", "Release", "Hype", "1K CCU"}
