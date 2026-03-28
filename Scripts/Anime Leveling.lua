@@ -509,7 +509,7 @@ GamemodeBox:CreateToggle({
 
                 local target = nil
                 for _, enemy in ipairs(workspace:GetDescendants()) do
-                    if enemy:IsA("Model") and enemy:GetAttribute("IsEnemyRaid") == true and enemy:GetAttribute("Attackable") == true then
+                    if enemy:IsA("Model") and enemy:GetAttribute("IsRaidEnemy") == true and enemy:GetAttribute("Attackable") == true then
                         target = enemy
                         break
                     end
