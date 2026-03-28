@@ -303,7 +303,7 @@ local Atc = Pl:CreateToggle({
 
 local autoEquip = false
 Pl:CreateToggle({
-    Name = "Auto Equip Best Accessories",
+    Name = "Auto Equip Best All",
     Icon = NebulaIcons:GetIcon('gem', 'Lucide'),
     CurrentValue = false,
     Style = 2,
@@ -314,6 +314,9 @@ Pl:CreateToggle({
             while autoEquip do
                 pcall(function()
                     rp.Accessories.EquipBestAccessories:FireServer()
+                    rp.MorphPets.EquipBestMorphPets:FireServer()
+                    rp.Pets.EquipBestPets:FireServer()
+                    rp.Weapons.EquipBestWeapons:FireServer()
                 end)
                 task.wait(15)
             end
