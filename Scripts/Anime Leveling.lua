@@ -128,9 +128,9 @@ local WorldLabel = AutoFarmBox:CreateLabel({
 
 WorldLabel:AddDropdown({
     Options = {"World1", "World2", "World3", "World4"},
-    CurrentOptions = {},
+    CurrentOptions = {"World1"},
     Callback = function(Options)
-        selectedWorld = Options
+        selectedWorld = Options[1] or "World1"
     end,
 }, "DD_WORLD_SELECT")
 
