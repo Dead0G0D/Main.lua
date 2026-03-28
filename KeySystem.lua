@@ -11,7 +11,7 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 
 local SUPPORTED_GAMES = {
     [92783581681786] = "https://raw.githubusercontent.com/Dead0G0D/Main.lua/refs/heads/main/Anime%20Cicker%20(Hunters%202.0).lua",
-    -- [PLACE_ID] = "https://raw.githubusercontent.com/.../script.lua",
+    [78754030900809] = "https://raw.githubusercontent.com/Dead0G0D/Main.lua/refs/heads/main/Scripts/Anime%20Leveling.lua",
 }
 
 local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1484255458477740224/UNHgxyTGlFyw84VkH0OYJcniTuL-tFwK6UoKNXOVSz32uo_QLJprWQmZqcKhagCFMIAH"
