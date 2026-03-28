@@ -373,7 +373,7 @@ local up2 = Up:CreateToggle({
 }, "TOGGLE_Up2")
 
 up2:AddDropdown({
-    Options = {"Energy", "Stars", "Luck", "Damage"},
+    Options = {"Energy", "Coins", "Luck", "Damage"},
     CurrentOptions = {"Energy"},
     Callback = function(Options)
         selectedStat = Options[1] or "Energy"
