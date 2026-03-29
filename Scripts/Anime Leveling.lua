@@ -396,19 +396,26 @@ up2:AddDropdown({
 }, "DD_UP2")
 --game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("OpenWisteriaRaid"):FireServer()
 local GACHA_REMOTES = {
-    ["Dragon Ball Power"] = rp:WaitForChild("RollDragonBallPower"),
-    ["Saiyan Power"]      = rp:WaitForChild("RollSaiyanPower"),
-    ["Avocado"]   = rp:WaitForChild("RollAvocadoPower"),
-    ["Breathing"] = rp:WaitForChild("RollBreathingPower"),
-    ["Dagger"]    = rp:WaitForChild("RollDaggerPower"),
-    ["Farm"]      = rp:WaitForChild("RollFarmPower"),
-    ["Fruit"]     = rp:WaitForChild("RollFruitPower"),
-    ["Grimoires"] = rp:WaitForChild("RollGrimoiresPower"),
-    ["Jungle"]    = rp:WaitForChild("RollJunglePower"),
-    ["Lava"]      = rp:WaitForChild("RollLavaPower"),
-    ["Pet"]       = rp:WaitForChild("RollPetPower"),
-    ["Robot"]     = rp:WaitForChild("RollRobotPower"),
-    ["Saturn"]    = rp:WaitForChild("RollSaturnPower"),
+    ["Pet"]             = rp:WaitForChild("RollPetPower"),
+    ["TungFamily"]      = rp:WaitForChild("RollTungFamily"),
+    ["Saiyan Power"]    = rp:WaitForChild("RollSaiyanPower"),
+    ["DragonBall"]      = rp:WaitForChild("RollDragonBallPower"),
+    ["Dagger"]          = rp:WaitForChild("RollDaggerPower"),
+    ["Jungle"]          = rp:WaitForChild("RollJunglePower"),
+    ["Farm"]            = rp:WaitForChild("RollFarmPower"),
+    ["Avocado"]         = rp:WaitForChild("RollAvocadoPower"),
+    ["Lava"]            = rp:WaitForChild("RollLavaPower"),
+    ["Ballerina"]       = rp:WaitForChild("RollBallerinaPower"),
+    ["Saturn"]          = rp:WaitForChild("RollSaturnPower"),
+    ["Robot"]           = rp:WaitForChild("RollRobotPower"),
+    ["Saiyan"]          = rp:WaitForChild("RollSaiyan"),
+    ["Fruit"]           = rp:WaitForChild("RollFruitPower"),
+    ["Grimoires"]       = rp:WaitForChild("RollGrimoires"),
+    ["Grimoires Power"] = rp:WaitForChild("RollGrimoiresPower"),
+    ["Demon"]           = rp:WaitForChild("RollDemon"),
+    ["Demon Power"]     = rp:WaitForChild("RollDemonPower"),
+    ["Breathing"]       = rp:WaitForChild("RollBreathing"),
+    ["Breathing Power"] = rp:WaitForChild("RollBreathingPower"),
 }
 
 local gachaNames = {}
@@ -469,6 +476,67 @@ Up:CreateButton({
         end)
     end,
 }, "BTN_DELETE_GACHA_ANIM")
+
+local LEVELING_REMOTES = {
+    ["Tralalero"]   = rp:WaitForChild("TralaleroLeveling"),
+    ["SharpMelon"]  = rp:WaitForChild("SharpMelonLeveling"),
+    ["EnergyMelon"] = rp:WaitForChild("EnergyMelonLeveling"),
+    ["Fortune"]     = rp:WaitForChild("FortuneLeveling"),
+    ["Blessed"]     = rp:WaitForChild("BlessedLeveling"),
+    ["Fruit"]       = rp:WaitForChild("FruitLeveling"),
+    ["Haki"]        = rp:WaitForChild("HakiLeveling"),
+    ["Hotspot"]     = rp:WaitForChild("HotspotLeveling"),
+    ["Dragon"]      = rp:WaitForChild("DragonLeveling"),
+    ["Christmas"]   = rp:WaitForChild("ChristmasLeveling"),
+    ["Toaster"]     = rp:WaitForChild("ToasterLeveling"),
+    ["Dragonfruit"] = rp:WaitForChild("DragonfruitLeveling"),
+    ["BloodArt"]    = rp:WaitForChild("BloodArtLeveling"),
+    ["Wisteria"]    = rp:WaitForChild("WisteriaLeveling"),
+}
+
+local levelingNames = {}
+for name in pairs(LEVELING_REMOTES) do
+    table.insert(levelingNames, name)
+end
+
+local selectedLeveling = {}
+local autoLeveling = false
+
+local LevelingToggle = Up:CreateToggle({
+    Name = "Auto Leveling",
+    Icon = NebulaIcons:GetIcon('trending-up', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        autoLeveling = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoLeveling do
+                if selectedLeveling and #selectedLeveling > 0 then
+                    for _, leveling in ipairs(selectedLeveling) do
+                        if not autoLeveling then break end
+                        pcall(function()
+                            local remote = LEVELING_REMOTES[leveling]
+                            if remote then remote:FireServer() end
+                        end)
+                        task.wait(0.1)
+                    end
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+    end,
+}, "TOGGLE_AUTO_LEVELING")
+
+LevelingToggle:AddDropdown({
+    Options = levelingNames,
+    CurrentOptions = {},
+    MultipleOptions = true,
+    Placeholder = "Select Leveling",
+    Callback = function(Options)
+        selectedLeveling = Options or {}
+    end,
+}, "DD_LEVELING")
 
 local CODES = {"Leveling", "Release", "Hype", "1K CCU"}
 Pl:CreateButton({
