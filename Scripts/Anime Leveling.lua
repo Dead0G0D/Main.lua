@@ -812,6 +812,74 @@ GamemodeBox:CreateToggle({
     end,
 }, "TOGGLE_AUTO_FARM_MODES")
 
+local hideNameActive = false
+local hideNameConnections = {}
+local fakeHideName = "YeahUsingScript"
+
+if not getgenv().C then getgenv().C = {F = fakeHideName, D = fakeHideName} end
+
+ConfigMisc:CreateInput({
+    Name = "Set Name",
+    Icon = NebulaIcons:GetIcon('user-pen', 'Lucide'),
+    CurrentValue = "",
+    PlaceholderText = "YeahUsingScript",
+    Enter = true,
+    Callback = function(Text)
+        if Text and Text ~= "" then
+            fakeHideName = Text
+        end
+    end,
+}, "INPUT_HIDENAME_FAKE")
+
+local function setupHideName()
+    local l = LocalPlayer
+    local char = l.Character or l.CharacterAdded:Wait()
+
+    local function applyToChar(c)
+        pcall(function()
+            local titleGui = c:FindFirstChild("Head") and c.Head:FindFirstChild("PlayerTitleGui")
+            if not titleGui then return end
+            local playerLabel = titleGui:FindFirstChild("Frame") and titleGui.Frame:FindFirstChild("Player")
+            if playerLabel then
+                playerLabel.Text = fakeHideName
+                table.insert(hideNameConnections, playerLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                    if playerLabel.Text ~= fakeHideName then
+                        playerLabel.Text = fakeHideName
+                    end
+                end))
+            end
+        end)
+    end
+
+    applyToChar(char)
+    table.insert(hideNameConnections, l.CharacterAdded:Connect(function(c)
+        task.wait(0.5)
+        applyToChar(c)
+    end))
+end
+
+local function cleanupHideName()
+    for _, conn in ipairs(hideNameConnections) do
+        conn:Disconnect()
+    end
+    hideNameConnections = {}
+end
+
+ConfigMisc:CreateToggle({
+    Name = "Hide Name",
+    Icon = NebulaIcons:GetIcon('user-minus', 'Lucide'),
+    CurrentValue = false,
+    Style = 2,
+    Callback = function(Value)
+        hideNameActive = Value
+        if Value then
+            setupHideName()
+        else
+            cleanupHideName()
+        end
+    end,
+}, "TOGGLE_HIDENAME")
+
 local speedValue = 70
 ConfigMisc:CreateInput({
     Name = "Set Speed",
@@ -982,6 +1050,71 @@ ConfigMisc:CreateToggle({
         end
     end,
 }, "TOGGLE_AFK_MODE")
+
+local function applyFpsBooster()
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.ShadowSoftness = 0
+        if sethiddenproperty then
+            sethiddenproperty(Lighting, "Technology", 2)
+        end
+    end)
+
+    pcall(function()
+        settings().Rendering.QualityLevel = 1
+        settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
+    end)
+
+    pcall(function()
+        for _, v in pairs(MaterialService:GetChildren()) do v:Destroy() end
+        MaterialService.Use2022Materials = false
+    end)
+
+    pcall(function()
+        if setfpscap then setfpscap(1e6) end
+    end)
+
+    pcall(function()
+        local terrain = workspace:FindFirstChildOfClass("Terrain")
+        if terrain then
+            terrain.WaterWaveSize = 0
+            terrain.WaterWaveSpeed = 0
+            terrain.WaterReflectance = 0
+            terrain.WaterTransparency = 0
+            if sethiddenproperty then
+                sethiddenproperty(terrain, "Decoration", false)
+            end
+        end
+    end)
+
+    pcall(function()
+        local energyFrame = LocalPlayer.PlayerGui.Main:FindFirstChild("EnergyFrame")
+        if energyFrame then energyFrame:Destroy() end
+    end)
+
+    pcall(function()
+        local damageAmount = game:GetService("ReplicatedStorage").BillboardGuis.HitPetGui.Holder:FindFirstChild("DamageAmount")
+        if damageAmount then damageAmount:Destroy() end
+    end)
+end
+
+ConfigMisc:CreateButton({
+    Name = "FPS Booster",
+    Icon = NebulaIcons:GetIcon('gauge', 'Lucide'),
+    Style = 1,
+    CenterContent = true,
+    Callback = function()
+        applyFpsBooster()
+        for _, v in pairs(game:GetDescendants()) do
+            processInstance(v)
+        end
+        game.DescendantAdded:Connect(function(v)
+            task.wait(0.5)
+            processInstance(v)
+        end)
+    end,
+}, "BTN_FPS_BOOSTER")
 
 Starlight:OnDestroy(function()
     print("Null System • Script Deleted")
