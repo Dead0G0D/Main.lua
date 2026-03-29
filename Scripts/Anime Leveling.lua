@@ -118,8 +118,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local MaterialService = game:GetService("MaterialService")
 
 local function Modes()
     local dungeon = LocalPlayer.PlayerGui:FindFirstChild("Main")
@@ -556,44 +554,6 @@ Pl:CreateButton({
 local lvraid = ""
 local hasJustTeleported = false
 local justLeftMode = {}
-local selectedMap = ""
-local autoModesActive = false
-local joiningMode = false
-local currentMode = nil
-local AutoLeaveAll = false
-local selectedRaid = "Raid"
-local selectedModes = {}
-
-local MODE_PRIORITIES = {"Raid", "WisteriaRaid"}
-
-local MODE_SCHEDULES = {
-    ["Raid"]         = {minutes = {0, 30}},
-    ["WisteriaRaid"] = {always = true},
-}
-
-local function IsAvailable(modeName)
-    local schedule = MODE_SCHEDULES[modeName]
-    if not schedule then return false end
-    if schedule.always then return true end
-    local min = os.date("*t").min
-    return table.find(schedule.minutes, min) ~= nil
-end
-
-local function CanJoinMode(modeName)
-    if not table.find(selectedModes, modeName) then return false end
-    local lastLeft = justLeftMode[modeName]
-    if lastLeft and os.time() - lastLeft < 55 then return false end
-    return IsAvailable(modeName)
-end
-
-local function GetHighestPriorityAvailable()
-    for _, mode in ipairs(MODE_PRIORITIES) do
-        if CanJoinMode(mode) then
-            return mode
-        end
-    end
-    return nil
-end
 
 local timemodes = GamemodeBox:CreateParagraph({
     Name = "Timers",
@@ -620,7 +580,7 @@ local function updateEventParagraph(paragraph, min, sec)
     end
 
     local raidTimer = timeToNext({0, 30})
-    paragraph:Set({Content = "Raid Open: XX:00 & XX:30\nNext In: " .. raidTimer .. "\nWisteria Raid: Always Available"})
+    paragraph:Set({Content = "TowerRaid Open: XX:00 & XX:30\nNext In: " .. raidTimer})
 end
 
 local now = os.date("!*t")
@@ -636,41 +596,38 @@ end)
 
 GamemodeBox:CreateDivider()
 
-local StatusParagraph = GamemodeBox:CreateParagraph({
-    Name = "Status",
-    Icon = NebulaIcons:GetIcon('info', 'Lucide'),
-    Content = "Idle",
-}, "PARA_STATUS")
+local MODE_SCHEDULES = {
+    ["Raid"] = {minutes = {0, 30}},
+}
 
-local function updateStatus()
-    local waveFrame = LocalPlayer.PlayerGui:FindFirstChild("Main")
-    waveFrame = waveFrame and waveFrame:FindFirstChild("HUD")
-    waveFrame = waveFrame and waveFrame:FindFirstChild("Dungeon")
-    waveFrame = waveFrame and waveFrame:FindFirstChild("RaidsInfo")
-    waveFrame = waveFrame and waveFrame:FindFirstChild("WavesFrame")
-    local waveLabel = waveFrame and waveFrame:FindFirstChild("Wave")
-
-    local currentWave = waveLabel and waveLabel.ContentText or "N/A"
-
-    local lines = {}
-    table.insert(lines, "In Mode: " .. tostring(Modes()))
-    table.insert(lines, "Current Mode: " .. (currentMode or "None"))
-    table.insert(lines, "Current Wave: " .. currentWave)
-    table.insert(lines, "Auto Join: " .. (autoModesActive and "ON" or "OFF"))
-    table.insert(lines, "Auto Leave: " .. (AutoLeaveAll and "ON | Wave: " .. (lvraid ~= "" and lvraid or "End") or "OFF"))
-    table.insert(lines, "Map: " .. (selectedMap ~= "" and selectedMap or "None"))
-
-    StatusParagraph:Set({Content = table.concat(lines, "\n")})
+local function IsAvailable(modeName)
+    local schedule = MODE_SCHEDULES[modeName]
+    if not schedule then return false end
+    local min = os.date("*t").min
+    return table.find(schedule.minutes, min) ~= nil
 end
 
-task.spawn(function()
-    while true do
-        pcall(updateStatus)
-        task.wait(1)
-    end
-end)
+local function CanJoinMode(modeName)
+    local lastLeft = justLeftMode[modeName]
+    if lastLeft and os.time() - lastLeft < 55 then return false end
+    return IsAvailable(modeName)
+end
 
-GamemodeBox:CreateDivider()
+local selectedMap = ""
+
+local MapLabel = SV:CreateLabel({
+    Name = "Map to Leave",
+    Icon = NebulaIcons:GetIcon('map', 'Lucide'),
+}, "LABEL_MAP")
+
+MapLabel:AddDropdown({
+    Options = {"World1", "World2", "World3", "World4"},
+    CurrentOptions = {},
+    Placeholder = "Select Map",
+    Callback = function(Options)
+        selectedMap = Options[1] or ""
+    end,
+}, "DD_MAP_SELECT")
 
 local function tpback()
     if hasJustTeleported then return end
@@ -687,22 +644,8 @@ local function tpback()
     hasJustTeleported = false
 end
 
-local MapLabel = SV:CreateLabel({
-    Name = "Map to Leave",
-    Icon = NebulaIcons:GetIcon('map', 'Lucide'),
-}, "LABEL_MAP")
-
-MapLabel:AddDropdown({
-    Options = {"World1", "World2", "World3", "World4"},
-    CurrentOptions = {},
-    Placeholder = "Select Map",
-    Callback = function(Options)
-        selectedMap = Options[1] or ""
-    end,
-}, "DD_MAP_SELECT")
-
 Gm:CreateInput({
-    Name = "Set Wave - Raid",
+    Name = "Set Wave - TowerRaid",
     Icon = NebulaIcons:GetIcon('text-cursor-input', 'Lucide'),
     CurrentValue = "",
     Numeric = true,
@@ -713,6 +656,7 @@ Gm:CreateInput({
     end,
 }, "INPUT_LEAVE_RAID")
 
+local AutoLeaveAll = false
 SV:CreateToggle({
     Name = "Auto Leave",
     Icon = NebulaIcons:GetIcon('door-closed', 'Lucide'),
@@ -736,15 +680,9 @@ SV:CreateToggle({
                     end
 
                     if inMode and lvraid and lvraid ~= "" then
-                        local waveFrame = LocalPlayer.PlayerGui:FindFirstChild("Main")
-                        waveFrame = waveFrame and waveFrame:FindFirstChild("HUD")
-                        waveFrame = waveFrame and waveFrame:FindFirstChild("Dungeon")
-                        waveFrame = waveFrame and waveFrame:FindFirstChild("RaidsInfo")
-                        waveFrame = waveFrame and waveFrame:FindFirstChild("WavesFrame")
-                        local waveLabel = waveFrame and waveFrame:FindFirstChild("Wave")
-
+                        local waveLabel = LocalPlayer.PlayerGui.Main.HUD.Dungeon.RaidsInfo.WavesFrame:FindFirstChild("Wave")
                         if waveLabel then
-                            local current = tonumber(string.match(waveLabel.ContentText, "^(%d+)"))
+                            local current = tonumber(string.match(waveLabel.Text, "^(%d+)"))
                             if current and current == tonumber(lvraid) then
                                 wasInMode = false
                                 tpback()
@@ -762,52 +700,32 @@ SV:CreateToggle({
     end,
 }, "TOGGLE_AUTOLEAVE")
 
-local function JoinMode(modeName)
+local autoModesActive = false
+local joiningMode = false
+local currentMode = nil
+
+local function JoinMode()
     if joiningMode then return end
     joiningMode = true
     task.spawn(function()
         repeat
             pcall(function()
-                if modeName == "WisteriaRaid" then
-                    rp:WaitForChild("OpenWisteriaRaid"):FireServer()
-                    task.wait(1)
-                    rp:WaitForChild("JoinWisteriaRaid"):FireServer()
-                else
-                    rp:WaitForChild("JoinTowerRaid"):FireServer()
-                end
+                rp:WaitForChild("JoinTowerRaid"):FireServer()
             end)
             task.wait(2)
         until Modes() or not autoModesActive
-        currentMode = Modes() and modeName or nil
+        currentMode = Modes() and "Raid" or nil
         joiningMode = false
     end)
 end
 
-local function LeaveCurrentMode()
-    if not currentMode then return end
-    tpback()
-    justLeftMode[currentMode] = os.time()
-    currentMode = nil
-    joiningMode = false
-end
-
 local ModeLabel = GamemodeBox:CreateLabel({
-    Name = "Select Modes",
-    Icon = NebulaIcons:GetIcon('list', 'Lucide'),
+    Name = "Auto Join Tower Raid",
+    Icon = NebulaIcons:GetIcon('list', 'Phosphor'),
 }, "LABEL_MODES")
 
-ModeLabel:AddDropdown({
-    Options = {"Raid", "WisteriaRaid"},
-    CurrentOptions = {},
-    Placeholder = "Select Modes",
-    MultipleOptions = true,
-    Callback = function(Options)
-        selectedModes = Options or {}
-    end,
-}, "DD_MODES")
-
 GamemodeBox:CreateToggle({
-    Name = "Auto Join",
+    Name = "Auto Join TowerRaid",
     Icon = NebulaIcons:GetIcon('door-open', 'Lucide'),
     CurrentValue = false,
     Style = 2,
@@ -825,31 +743,13 @@ GamemodeBox:CreateToggle({
                     local inMode = Modes()
 
                     if not inMode and currentMode then
-                        justLeftMode[currentMode] = os.time()
+                        justLeftMode["Raid"] = os.time()
                         currentMode = nil
                         joiningMode = false
                     end
 
-                    local best = GetHighestPriorityAvailable()
-
-                    if not best then
-                        task.wait(5)
-                        return
-                    end
-
-                    if currentMode == best then
-                        task.wait(5)
-                        return
-                    end
-
-                    if currentMode and currentMode ~= best then
-                        LeaveCurrentMode()
-                        task.wait(2)
-                        return
-                    end
-
-                    if not inMode and not joiningMode then
-                        JoinMode(best)
+                    if not inMode and not joiningMode and CanJoinMode("Raid") then
+                        JoinMode()
                     end
                 end)
                 task.wait(3)
@@ -884,7 +784,7 @@ GamemodeBox:CreateToggle({
 
                 local target = nil
                 for _, enemy in ipairs(workspace:GetDescendants()) do
-                    if enemy:IsA("Model") and enemy:GetAttribute("IsEnemyRaid") == true and enemy:GetAttribute("Attackable") == true then
+                    if enemy:IsA("Model") and enemy:GetAttribute("IsRaidEnemy") == true and enemy:GetAttribute("Attackable") == true then
                         target = enemy
                         break
                     end
