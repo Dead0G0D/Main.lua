@@ -484,20 +484,20 @@ Up:CreateButton({
 }, "BTN_DELETE_GACHA_ANIM")
 
 local LEVELING_REMOTES = {
-    ["Tralalero"]   = rp:WaitForChild("TralaleroLeveling"),
-    ["SharpMelon"]  = rp:WaitForChild("SharpMelonLeveling"),
-    ["EnergyMelon"] = rp:WaitForChild("EnergyMelonLeveling"),
-    ["Fortune"]     = rp:WaitForChild("FortuneLeveling"),
-    ["Blessed"]     = rp:WaitForChild("BlessedLeveling"),
-    ["Fruit"]       = rp:WaitForChild("FruitLeveling"),
-    ["Haki"]        = rp:WaitForChild("HakiLeveling"),
-    ["Hotspot"]     = rp:WaitForChild("HotspotLeveling"),
-    ["Dragon"]      = rp:WaitForChild("DragonLeveling"),
-    ["Christmas"]   = rp:WaitForChild("ChristmasLeveling"),
-    ["Toaster"]     = rp:WaitForChild("ToasterLeveling"),
-    ["Dragonfruit"] = rp:WaitForChild("DragonfruitLeveling"),
-    ["BloodArt"]    = rp:WaitForChild("BloodArtLeveling"),
-    ["Wisteria"]    = rp:WaitForChild("WisteriaLeveling"),
+    ["Tralalero"]     = rp:WaitForChild("TralaleroLeveling"),
+    ["Sharp Melon"]   = rp:WaitForChild("SharpMelonLeveling"),
+    ["Energy Melon"]  = rp:WaitForChild("EnergyMelonLeveling"),
+    ["Fortune"]       = rp:WaitForChild("FortuneLeveling"),
+    ["Blessed"]       = rp:WaitForChild("BlessedLeveling"),
+    ["Fruit"]         = rp:WaitForChild("FruitLeveling"),
+    ["Haki"]          = rp:WaitForChild("HakiLeveling"),
+    ["Hotspot"]       = rp:WaitForChild("HotspotLeveling"),
+    ["Dragon"]        = rp:WaitForChild("DragonLeveling"),
+    ["Christmas"]     = rp:WaitForChild("ChristmasLeveling"),
+    ["Toaster"]       = rp:WaitForChild("ToasterLeveling"),
+    ["Dragon Fruit"]  = rp:WaitForChild("DragonfruitLeveling"),
+    ["Blood Art"]     = rp:WaitForChild("BloodArtLeveling"),
+    ["Wisteria"]      = rp:WaitForChild("WisteriaLeveling"),
 }
 
 local levelingNames = {}
