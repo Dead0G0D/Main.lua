@@ -130,6 +130,23 @@ local function Modes()
 end
 
 local selectedWorld = "World1"
+local function GetWorlds()
+    local worlds = {}
+
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj.Name:match("^World%d+$") then
+            table.insert(worlds, obj.Name)
+        end
+    end
+
+    table.sort(worlds, function(a, b)
+        local numA = tonumber(a:match("%d+"))
+        local numB = tonumber(b:match("%d+"))
+        return numA < numB
+    end)
+
+    return worlds
+end
 
 local WorldLabel = AutoFarmBox:CreateLabel({
     Name = "Select World",
@@ -137,8 +154,8 @@ local WorldLabel = AutoFarmBox:CreateLabel({
 }, "LABEL_WORLD")
 
 WorldLabel:AddDropdown({
-    Options = {"World1", "World2", "World3", "World4"},
-    CurrentOptions = {"World1"},
+    Options = GetWorlds(),
+    CurrentOptions = {selectedWorld},
     Callback = function(Options)
         selectedWorld = Options[1] or "World1"
     end,
@@ -397,53 +414,45 @@ up2:AddDropdown({
     end,
 }, "DD_UP2")
 
-local GACHA_REMOTES = {
-    ["Pet"]               = rp:WaitForChild("RollPetPower"),
-    ["Tung Family"]       = rp:WaitForChild("RollTungFamily"),
-    ["Saiyan"]            = rp:WaitForChild("RollSaiyan"),
-    ["Saiyan Power"]      = rp:WaitForChild("RollSaiyanPower"),
-    ["Dragon Ball"]       = rp:WaitForChild("RollDragonBallPower"),
-    ["Dagger"]            = rp:WaitForChild("RollDaggerPower"),
-    ["Jungle"]            = rp:WaitForChild("RollJunglePower"),
-    ["Farm"]              = rp:WaitForChild("RollFarmPower"),
-    ["Avocado"]           = rp:WaitForChild("RollAvocadoPower"),
-    ["Lava"]              = rp:WaitForChild("RollLavaPower"),
-    ["Ballerina"]         = rp:WaitForChild("RollBallerinaPower"),
-    ["Saturn"]            = rp:WaitForChild("RollSaturnPower"),
-    ["Robot"]             = rp:WaitForChild("RollRobotPower"),
-    ["Fruit"]             = rp:WaitForChild("RollFruitPower"),
-    ["Grimoires"]         = rp:WaitForChild("RollGrimoires"),
-    ["Grimoires Power"]   = rp:WaitForChild("RollGrimoiresPower"),
-    ["Demon"]             = rp:WaitForChild("RollDemon"),
-    ["Demon Power"]       = rp:WaitForChild("RollDemonPower"),
-    ["Breathing"]         = rp:WaitForChild("RollBreathing"),
-    ["Breathing Power"]   = rp:WaitForChild("RollBreathingPower"),
-    ["Prosperity"]        = rp:WaitForChild("RollProsperity"),
-    ["Prosperity Power"]  = rp:WaitForChild("RollProsperityPower"),
-    ["Blessing"]          = rp:WaitForChild("RollBlessing"),
-    ["Blessing Power"]    = rp:WaitForChild("RollBlessingPower"),
-}
+local function GetGachaRemotes()
+    local remotes = {}
+    local names = {}
 
-local gachaNames = {}
-for name in pairs(GACHA_REMOTES) do
-    table.insert(gachaNames, name)
+    for _, obj in pairs(rp:GetChildren()) do
+        if obj:IsA("RemoteEvent") and obj.Name:match("^Roll") then
+            local cleanName = obj.Name
+                :gsub("^Roll", "")
+                :gsub("Power", "")
+                :gsub("(%u)", " %1")
+                :gsub("^%s+", "")
+
+            remotes[cleanName] = obj
+            table.insert(names, cleanName)
+        end
+    end
+
+    table.sort(names)
+    return remotes, names
 end
 
+local GACHA_REMOTES, gachaNames = GetGachaRemotes()
 local selectedGachas = {}
-local upp3 = false
+local autoGacha = false
 
-local up3 = Up:CreateToggle({
+local GachaToggle = Up:CreateToggle({
     Name = "Auto Roll Gachas",
     Icon = NebulaIcons:GetIcon('package-open', 'Lucide'),
     CurrentValue = false,
     Style = 2,
     Callback = function(Value)
-        upp3 = Value
+        autoGacha = Value
         if not Value then return end
+
         task.spawn(function()
-            while upp3 do
-                if selectedGachas and #selectedGachas > 0 then
+            while autoGacha do
+                if #selectedGachas > 0 then
                     for _, gacha in ipairs(selectedGachas) do
+                        if not autoGacha then break end
                         pcall(function()
                             local remote = GACHA_REMOTES[gacha]
                             if remote then
@@ -456,16 +465,16 @@ local up3 = Up:CreateToggle({
             end
         end)
     end,
-}, "TOGGLE_Up3")
+}, "TOGGLE_AUTO_GACHA")
 
-up3:AddDropdown({
+GachaToggle:AddDropdown({
     Options = gachaNames,
     CurrentOptions = {},
     MultipleOptions = true,
     Callback = function(Options)
         selectedGachas = Options or {}
     end,
-}, "DD_UP3")
+}, "DD_AUTO_GACHA")
 
 Up:CreateButton({
     Name = "Delete Gacha Animation",
@@ -483,28 +492,27 @@ Up:CreateButton({
     end,
 }, "BTN_DELETE_GACHA_ANIM")
 
-local LEVELING_REMOTES = {
-    ["Tralalero"]     = rp:WaitForChild("TralaleroLeveling"),
-    ["Sharp Melon"]   = rp:WaitForChild("SharpMelonLeveling"),
-    ["Energy Melon"]  = rp:WaitForChild("EnergyMelonLeveling"),
-    ["Fortune"]       = rp:WaitForChild("FortuneLeveling"),
-    ["Blessed"]       = rp:WaitForChild("BlessedLeveling"),
-    ["Fruit"]         = rp:WaitForChild("FruitLeveling"),
-    ["Haki"]          = rp:WaitForChild("HakiLeveling"),
-    ["Hotspot"]       = rp:WaitForChild("HotspotLeveling"),
-    ["Dragon"]        = rp:WaitForChild("DragonLeveling"),
-    ["Christmas"]     = rp:WaitForChild("ChristmasLeveling"),
-    ["Toaster"]       = rp:WaitForChild("ToasterLeveling"),
-    ["Dragon Fruit"]  = rp:WaitForChild("DragonfruitLeveling"),
-    ["Blood Art"]     = rp:WaitForChild("BloodArtLeveling"),
-    ["Wisteria"]      = rp:WaitForChild("WisteriaLeveling"),
-}
+local function GetLevelingRemotes()
+    local remotes = {}
+    local names = {}
 
-local levelingNames = {}
-for name in pairs(LEVELING_REMOTES) do
-    table.insert(levelingNames, name)
+    for _, obj in pairs(rp:GetChildren()) do
+        if obj:IsA("RemoteEvent") and obj.Name:match("Leveling$") then
+            local cleanName = obj.Name
+                :gsub("Leveling", "")
+                :gsub("(%u)", " %1")
+                :gsub("^%s+", "")
+
+            remotes[cleanName] = obj
+            table.insert(names, cleanName)
+        end
+    end
+
+    table.sort(names)
+    return remotes, names
 end
 
+local LEVELING_REMOTES, levelingNames = GetLevelingRemotes()
 local selectedLeveling = {}
 local autoLeveling = false
 
@@ -516,14 +524,17 @@ local LevelingToggle = Up:CreateToggle({
     Callback = function(Value)
         autoLeveling = Value
         if not Value then return end
+
         task.spawn(function()
             while autoLeveling do
-                if selectedLeveling and #selectedLeveling > 0 then
-                    for _, leveling in ipairs(selectedLeveling) do
+                if #selectedLeveling > 0 then
+                    for _, lvl in ipairs(selectedLeveling) do
                         if not autoLeveling then break end
                         pcall(function()
-                            local remote = LEVELING_REMOTES[leveling]
-                            if remote then remote:FireServer() end
+                            local remote = LEVELING_REMOTES[lvl]
+                            if remote then
+                                remote:FireServer()
+                            end
                         end)
                         task.wait(0.1)
                     end
