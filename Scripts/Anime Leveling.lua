@@ -129,7 +129,7 @@ local function Modes()
     return dungeon.Visible
 end
 
-local selectedWorld = "World1"
+local selectedWorld = ""
 local function GetWorlds()
     local worlds = {}
 
@@ -157,7 +157,7 @@ WorldLabel:AddDropdown({
     Options = GetWorlds(),
     CurrentOptions = {selectedWorld},
     Callback = function(Options)
-        selectedWorld = Options[1] or "World1"
+        selectedWorld = Options[1] or ""
     end,
 }, "DD_WORLD_SELECT")
 
@@ -767,7 +767,7 @@ local MapLabel = SV:CreateLabel({
 }, "LABEL_MAP")
 
 MapLabel:AddDropdown({
-    Options = {"World1", "World2", "World3", "World4"},
+    Options = GetWorlds(),
     CurrentOptions = {},
     Placeholder = "Select Map",
     Callback = function(Options)
