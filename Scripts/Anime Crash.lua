@@ -167,7 +167,17 @@ local AutoFarmSection = MainTab:Section({ Title = "Auto Farm", Icon = "repeat", 
 local PlayerSection = MainTab:Section({ Title = "Player", Icon = "user-cog", Box = true })
 local UpgradesSection = MainTab:Section({ Title = "Gachas|Levelings", Icon = "diamond-plus", Box = true })
 
+local starRollActive = false
+local starRollConnections = {}
+local starRollTask = nil
+local summonPart = nil
 
+local function cleanupStarRollConnections()
+    for _, conn in ipairs(starRollConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    starRollConnections = {}
+end
 local clickRange = 50 
 local selectedWorld = ""
 local farmRunning = false
@@ -204,6 +214,63 @@ local afkModeEnabled = false
 local autoFarmWasEnabled = false
 local autoFarmLockedByMode = false
 if not getgenv().C then getgenv().C = { F = fakeHideName, D = fakeHideName } end
+
+AboutHubTab:Stats({
+    Title = "Null Hub Information",
+    Desc = "Null Hub is a premium automation interface built for ".. tostring(GameName) ..", designed to enhance your gameplay with efficient, secure, and user-friendly features.",
+    Items = {
+        {Key = "Discord", Value = "Join our community"},
+        {Key = "YouTube Channel", Value = "New Scripts & Updates"},
+        {Key = "Website", Value = "Official Portal"},
+    },
+})
+
+local Aboutg = AboutHubTab:Group({})
+Aboutg:Button({
+    Title = "YouTube",
+    Icon = "youtube",
+    IconAlign = "Left",
+    Justify = "Center",
+    Callback = function()
+        WindUI:Notify({
+            Title = "YouTube",
+            Content = "Channel coming soon! Stay tuned for tutorials and updates.",
+            Icon = "rbxassetid://90057404579525",
+            Duration = 2.5,
+        })
+    end,
+})
+
+Aboutg:Button({
+    Title = "Discord",
+    Icon = "rbxassetid://101192191207677",
+    IconAlign = "Left",
+    Justify = "Center",
+    Callback = function()
+        setclipboard("https://discord.gg/m3Q6CPbCS9")
+        WindUI:Notify({
+            Title = "Discord",
+            Content = "Invite link copied to clipboard!",
+            Icon = "rbxassetid://90057404579525",
+            Duration = 2.5,
+        })
+    end,
+})
+
+Aboutg:Button({
+    Title = "Website",
+    Icon = "globe",
+    IconAlign = "Left",
+    Justify = "Center",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Website",
+            Content = "Official website coming soon! Check back later for updates.",
+            Icon = "rbxassetid://90057404579525",
+            Duration = 2.5,
+        })
+    end,
+})
 
 -- ==================== FUNÇÕES AUXILIARES ====================
 local function Modes()
@@ -438,7 +505,6 @@ local autoFarmToggle = AutoFarmSection:Toggle({
     end,
 })
 
--- Monitor de Modes() para bloquear/desbloquear Auto Farm
 task.spawn(function()
     while true do
         task.wait(1)
@@ -476,7 +542,7 @@ AutoFarmSection:Button({
          if priorityDD then priorityDD:Refresh(names, false) end
     end,
 })
-
+--game:GetService("Players").LocalPlayer.PlayerGui.Paradox.ModesInfo.Wave
 -- ==================== AUTO CLICK - INDEPENDENTE DE WORLD ====================
 PlayerSection:Slider({
     Title = "Auto Click Range",
@@ -547,36 +613,7 @@ PlayerSection:ToggleKeybind({
     end,
 })
 
--- ==================== VARIÁVEIS GLOBAIS PARA STAR ROLL ====================
-local starRollActive = false
-local starRollConnections = {}
-local savedPosition = nil
-local starRollTask = nil
-local summonPart = nil -- Variável para armazenar a referência da part
 
--- ==================== FUNÇÃO PARA LIMPAR CONEXÕES DO STAR ROLL ====================
-local function cleanupStarRollConnections()
-    for _, conn in ipairs(starRollConnections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    starRollConnections = {}
-end
-
--- ==================== FUNÇÃO PARA CONTROLAR ESTADO DO AUTO FARM VIA STAR ROLL ====================
-local function setAutoFarmByStarRoll(allow)
-    if allow and starRollActive and farmRunning then
-        return
-    end
-    if not allow and farmRunning and autoFarmToggle and autoFarmToggle.Set then
-        farmRunning = false
-        autoFarmToggle:Set(false)
-    elseif allow and not farmRunning and autoFarmToggle and autoFarmToggle.Set and not starRollActive then
-        farmRunning = true
-        autoFarmToggle:Set(true)
-    end
-end
-
--- ==================== STAR ROLL - LÓGICA CORRIGIDA ====================
 PlayerSection:Toggle({
     Title = "Star Roll",
     Icon = "package-open",
@@ -584,165 +621,931 @@ PlayerSection:Toggle({
     Flag = "upgrades_starroll",
     Callback = function(Value)
         autopetroll = Value
-        
-        -- Busca a part Summon uma vez ao ativar
-        summonPart = workspace:FindFirstChild("Game") 
-            and workspace.Game:FindFirstChild("Zones") 
-            and workspace.Game.Zones:FindFirstChild("Summons") 
+
+        summonPart = workspace:FindFirstChild("Game")
+            and workspace.Game:FindFirstChild("Zones")
+            and workspace.Game.Zones:FindFirstChild("Summons")
             and workspace.Game.Zones.Summons:FindFirstChild("GachaModel")
-        
+
         if Value then
-            -- Validação de segurança
             if not summonPart then
                 notify("Error", "Summon part not found!", "alert-circle", 3)
-                PlayerSection:FindFirstChild("upgrades_starroll"):Set(false) -- Desliga o toggle visualmente se falhar
                 return
             end
 
-            -- Ativa flag e PARA o Auto Farm
             starRollActive = true
-            setAutoFarmByStarRoll(false)
-            
-            -- Salva posição atual APENAS se não estivermos já salvando de um roll anterior
-            if not savedPosition then
-                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then 
-                    savedPosition = hrp.CFrame 
-                end
+            farmRunning = false
+            if autoFarmToggle and autoFarmToggle.Set then
+                autoFarmToggle:Set(false)
             end
-            
-            -- Teleporta IMEDIATAMENTE para a posição da Star (Offset 0,0,0.5)
+
             local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
-           local pivot = summonPart:GetPivot()
-                hrp.CFrame = pivot
+                hrp.CFrame = summonPart:GetPivot()
             end
-            
-            -- Envia remote inicial
+
             pcall(function() rp:FireServer({{"Pets","Summon",{useMaxRoll=true}},"\006"}) end)
-            
-            -- Monitora PlayerGui.SummonAnimate.Gacha
+
             local playerGui = LocalPlayer:WaitForChild("PlayerGui", 10)
-            if not playerGui then 
+            if not playerGui then
                 starRollActive = false
-                setAutoFarmByStarRoll(true)
-                return 
+                farmRunning = true
+                return
             end
-            
+
             local summonAnimate = playerGui:WaitForChild("SummonAnimate", 10)
-            if not summonAnimate then 
+            if not summonAnimate then
                 starRollActive = false
-                setAutoFarmByStarRoll(true)
-                return 
+                farmRunning = true
+                return
             end
-            
+
             local gachaFrame = summonAnimate:WaitForChild("Gacha", 10)
-            if not gachaFrame then 
+            if not gachaFrame then
                 starRollActive = false
-                setAutoFarmByStarRoll(true)
-                return 
+                farmRunning = true
+                return
             end
-            
-            -- Flag para saber se já tem pet aparecido
+
             local hasPetVisible = false
-            local rollAttempt = 0
-            
-            -- Função para verificar se é um frame de pet válido
+
             local function isValidPetFrame(child)
                 if not child:IsA("Frame") and not child:IsA("TextButton") then
                     return false
                 end
                 local name = child.Name:lower()
-                -- Ignora elementos de UI genéricos
                 local ignored = {"template","viewport","frame","stop","uigridthlayout","uilistlayout","uiaspectratioconstraint","uipadding","uicorner"}
                 for _, ign in ipairs(ignored) do
-                    if name:find(ign) then return false end
+                    if name:find(ign) then
+                        return false
+                    end
                 end
-                -- Aceita se tiver texto ou imagem (provável pet)
                 return child:FindFirstChild("TextLabel") or child:FindFirstChild("ImageLabel") or name:match("%w+")
             end
-            
-            -- ChildAdded: Quando aparece um pet
+
             local connAdded = gachaFrame.ChildAdded:Connect(function(child)
                 if isValidPetFrame(child) then
                     hasPetVisible = true
-                    rollAttempt = rollAttempt + 1
-                    print("[Star Roll] Pet appeared: " .. child.Name .. " - Attempt #" .. rollAttempt)
-                    
-                    -- Reativa Auto Farm quando der o roll
-                    if starRollActive then
-                        starRollActive = false
-                        setAutoFarmByStarRoll(true)
-                        print("[Star Roll] Roll successful! Auto Farm reactivated.")
-                        
-                        -- Retorna para posição salva após 2 segundos
-                        task.delay(2, function()
-                            if savedPosition then
-                                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                                if hrp then 
-                                    hrp.CFrame = savedPosition 
-                                end
-                                savedPosition = nil -- Limpa para permitir novo save na próxima ativação
-                            end
-                        end)
-                    end
                 end
             end)
-            
-            -- ChildRemoved: Quando o pet some
+
             local connRemoved = gachaFrame.ChildRemoved:Connect(function(child)
                 if isValidPetFrame(child) then
                     hasPetVisible = false
-                    print("[Star Roll] Pet disappeared")
                 end
             end)
-            
+
             table.insert(starRollConnections, connAdded)
             table.insert(starRollConnections, connRemoved)
-            
-            -- Loop principal: teleporta continuamente e tenta roll
+
             starRollTask = task.spawn(function()
                 while starRollActive and autopetroll do
-                    -- Teleporta para a posição da star (Offset 0,0,0.5) a cada loop
                     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if hrp and summonPart then 
-                    local pivot = summonPart:GetPivot()
-                    hrp.CFrame = pivot
+                    if hrp and summonPart then
+                        hrp.CFrame = summonPart:GetPivot()
                     end
-                    
-                    -- Tenta fazer roll a cada 2 segundos
+
                     pcall(function() rp:FireServer({{"Pets","Summon",{useMaxRoll=true}},"\006"}) end)
-                    rollAttempt = rollAttempt + 1
-                    -- print("[Star Roll] Attempting roll #" .. rollAttempt) -- Opcional: reduzir spam no console
-                    
-                    task.wait(2)
+
+                    local waitCount = 0
+                    while not hasPetVisible and starRollActive and autopetroll do
+                        task.wait(0.1)
+                        waitCount = waitCount + 0.1
+                        if waitCount > 6 then
+                            break
+                        end
+                    end
+
+                    while hasPetVisible and starRollActive and autopetroll do
+                        task.wait(0.1)
+                    end
+
+                    task.wait(1)
+                end
+
+                if autoFarmToggle and autoFarmToggle.Set and not starRollActive then
+                    farmRunning = true
+                    autoFarmToggle:Set(true)
                 end
             end)
-            
+
         elseif not Value then
-            -- Desativa Star Roll
             starRollActive = false
-            
-            -- Para a task de roll
+
             if starRollTask then
                 task.cancel(starRollTask)
                 starRollTask = nil
             end
-            
+
             cleanupStarRollConnections()
 
-            if savedPosition then
-                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then 
-                    hrp.CFrame = savedPosition 
-                end
-                savedPosition = nil
+            if autoFarmToggle and autoFarmToggle.Set then
+                farmRunning = true
+                autoFarmToggle:Set(true)
             end
-
-            setAutoFarmByStarRoll(true)
-            print("[Star Roll] Deactivated. Auto Farm reactivated.")
         end
     end,
 })
 
---local args = {{{"TrialReceiver","Join","Easy"},"\006"}} rp:FireServer(unpack(args))
+PlayerSection:Toggle({
+    Title = "Auto Rankup",
+    Icon = "gem",
+    Value = false,
+    Flag = "player_autoequip",
+    Callback = function(Value)
+        autoEquip = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoEquip do
+                pcall(function()
+                    rp:FireServer({{"Rank","Rankup"},"\006"})
+                end)
+                task.wait(15)
+            end
+        end)
+    end,
+})
+
+PlayerSection:Toggle({
+    Title = "Auto Equip Best All",
+    Icon = "gem",
+    Value = false,
+    Flag = "player_autoequip",
+    Callback = function(Value)
+        autoEquip = Value
+        if not Value then return end
+        task.spawn(function()
+            while autoEquip do
+                pcall(function()
+                  rp:FireServer({{"Pets","EquipBest"},"\006"})
+                    rp:FireServer({{"WarriorSystem","EquipBest"},"\006"})
+                end)
+                task.wait(15)
+            end
+        end)
+    end,
+})
+
+-- ==================== MISC SECTION (Redesigned) ====================
+local MiscSection = ConfigTab:Section({ 
+    Title = "Miscellaneous", 
+    Icon = "settings",
+    Box = true,
+    BoxBorder = true,
+})
+
+local SpeedGroup = MiscSection:Group({})
+SpeedGroup:Slider({
+    Title = "Walk Speed",
+    Icon = "gauge",
+    Value = { Min = 16, Max = 200, Default = 70 },
+    Step = 1,
+    Flag = "misc_speed",
+    Callback = function(value)
+        speedValue = value
+        if applySpeedActive then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum.WalkSpeed = value end
+        end
+    end,
+})
+
+SpeedGroup:Toggle({
+    Title = "Apply Speed",
+    Icon = "zap",
+    Value = false,
+    Flag = "misc_applyspeed",
+    Callback = function(Value)
+        applySpeedActive = Value
+        if Value then
+            task.spawn(function()
+                while applySpeedActive do
+                    pcall(function()
+                        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                        if hum then hum.WalkSpeed = speedValue end
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        else
+            pcall(function()
+                local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if hum then hum.WalkSpeed = 16 end
+            end)
+        end
+    end,
+})
+
+MiscSection:Divider()
+local UtilityGroup = MiscSection:Group({})
+UtilityGroup:Toggle({
+    Title = "Anti AFK",
+    Icon = "shield-check",
+    Value = false,
+    Flag = "misc_antiafk",
+    Callback = function(Value)
+        antiAfkActive = Value
+    end,
+})
+
+UtilityGroup:Toggle({
+    Title = "Visual AFK Mode",
+    Icon = "monitor-off",
+    Value = false,
+    Flag = "misc_visualafk",
+    Callback = function(Value)
+        afkModeEnabled = Value
+        if not Value then return end
+        task.spawn(function()
+            local cam = Workspace.CurrentCamera
+            local stored, disabledLights, disabledFX = {}, {}, {}
+            local oldCamType, oldCamCFrame, camConn
+            
+            local function potatoWorld(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        if enable then 
+                            stored[v] = v.Material 
+                            v.Material = Enum.Material.Plastic 
+                            v.CastShadow = false
+                        elseif stored[v] then 
+                            v.Material = stored[v] 
+                        end
+                    elseif v:IsA("Texture") or v:IsA("Decal") then 
+                        v.Transparency = enable and 1 or 0 
+                    end
+                end
+                if not enable then stored = {} end
+            end
+
+            local function toggleLights(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                        if enable and v.Enabled then 
+                            disabledLights[v] = true 
+                            v.Enabled = false
+                        elseif disabledLights[v] then 
+                            v.Enabled = true 
+                        end
+                    end
+                end
+                if not enable then disabledLights = {} end
+            end
+
+            local function toggleFX(enable)
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                        if enable and v.Enabled then 
+                            disabledFX[v] = true 
+                            v.Enabled = false
+                        elseif disabledFX[v] then 
+                            v.Enabled = true 
+                        end
+                    end
+                end
+                if not enable then disabledFX = {} end
+            end
+
+            local function lockCamera(enable)
+                if enable then
+                    oldCamType = cam.CameraType 
+                    oldCamCFrame = cam.CFrame 
+                    cam.CameraType = Enum.CameraType.Scriptable
+                    camConn = RunService.RenderStepped:Connect(function() 
+                        cam.CFrame = CFrame.new(0, 999999, 0) 
+                    end)
+                else
+                    if camConn then camConn:Disconnect() end
+                    cam.CameraType = oldCamType or Enum.CameraType.Custom
+                    if oldCamCFrame then cam.CFrame = oldCamCFrame end
+                end
+            end
+
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            potatoWorld(true) 
+            toggleLights(true) 
+            toggleFX(true) 
+            lockCamera(true)
+            
+            repeat task.wait() until not afkModeEnabled
+            
+            potatoWorld(false) 
+            toggleLights(false) 
+            toggleFX(false) 
+            lockCamera(false)
+        end)
+    end,
+})
+
+LocalPlayer.Idled:Connect(function()
+    if antiAfkActive then
+        local cam = Workspace.CurrentCamera
+        if cam then
+            VirtualUser:Button2Down(Vector2.zero, cam.CFrame)
+            task.wait(1)
+            VirtualUser:Button2Up(Vector2.zero, cam.CFrame)
+        end
+    end
+end)
+
+MiscSection:Divider()
+local ActionsGroup = MiscSection:Group({})
+ActionsGroup:Button({
+    Title = "FPS Booster",
+    Icon = "zap",
+    Variant = "Primary",
+    Justify = "Center",
+    Callback = function()
+        pcall(function()
+            Lighting.GlobalShadows = false 
+            Lighting.FogEnd = 9e9 
+            Lighting.ShadowSoftness = 0
+            if sethiddenproperty then 
+                sethiddenproperty(Lighting, "Technology", 2) 
+            end
+            settings().Rendering.QualityLevel = 1 
+            settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
+            for _, v in pairs(MaterialService:GetChildren()) do 
+                v:Destroy() 
+            end
+            MaterialService.Use2022Materials = false
+            if setfpscap then 
+                setfpscap(1e6) 
+            end
+            local terr = workspace:FindFirstChildOfClass("Terrain")
+            if terr then
+                terr.WaterWaveSize = 0 
+                terr.WaterWaveSpeed = 0 
+                terr.WaterReflectance = 0 
+                terr.WaterTransparency = 0
+                if sethiddenproperty then 
+                    sethiddenproperty(terr, "Decoration", false) 
+                end
+            end
+        end)
+        for _, v in pairs(game:GetDescendants()) do 
+            processInstance(v) 
+        end
+        game.DescendantAdded:Connect(function(v) 
+            task.wait(0.5) 
+            processInstance(v) 
+        end)
+        notify("FPS Optimized", "Graphics settings optimized for performance", "rbxassetid://90057404579525", 3)
+    end,
+})
+
+AboutHubTab:Dropdown({
+    Title = "Choose Null Theme",
+    Flag = "themes_selected",
+    Values = { "Moon", "Grey", "Midv2" },
+    Callback = function(SelectedTheme)
+        WindUI:SetTheme(SelectedTheme)
+        ApplyThemeToUI(SelectedTheme)
+    end
+})
+-- ==================== CONFIG TAB ====================
+local ConfigSection = ConfigTab:Section({ 
+    Title = "Configuration Manager", 
+    Icon = "settings",
+    Box = true,
+    BoxBorder = true,
+})
+
+local ConfigStats = ConfigSection:Stats({
+    Title = "Config Status",
+    Desc = "Current configuration status",
+    Items = {
+        {Key = "Current Config", Value = "None"},
+        {Key = "Auto Load Config", Value = "None"},
+        {Key = "Total Configs", Value = "0"},
+    },
+})
+
+local selectedConfigName = "default"
+local ConfigManager = Window.ConfigManager
+local currentAutoLoadConfig = "None"
+
+ConfigSection:Input({
+    Title = "Config Name",
+    Icon = "file-pen",
+    Value = "default",
+    Placeholder = "Enter config name...",
+    Flag = "config_name_input",
+    Callback = function(value)
+        if value and value ~= "" then
+            selectedConfigName = value
+            ConfigStats:Update("Current Config", selectedConfigName)
+        end
+    end,
+})
+
+ConfigSection:Button({
+    Title = "Create Config",
+    Icon = "file-plus",
+    Callback = function()
+        if selectedConfigName and selectedConfigName ~= "" then
+            local cfg = ConfigManager:Config(selectedConfigName)
+            if cfg then
+                cfg:Save()
+                notify("Config Created", "Config '" .. selectedConfigName .. "' created successfully!", "check", 3)
+                local allConfigs = ConfigManager:AllConfigs()                
+                ConfigStats:Update("Total Configs", tostring(#allConfigs))
+            end
+        else
+            notify("Error", "Please enter a valid config name!", "alert-circle", 3)
+        end
+    end,
+})
+ConfigSection:Divider()
+local allConfigs = ConfigManager:AllConfigs()
+local defaultConfig = table.find(allConfigs, "default") and "default" or allConfigs[1]
+
+ConfigSection:Dropdown({
+    Title = "Select Config",
+    Icon = "folder",
+    Values = allConfigs,
+    Value = defaultConfig,
+    Flag = "config_selector",
+    Callback = function(value)
+        if value then
+            selectedConfigName = value
+            ConfigStats:Update("Current Config", selectedConfigName)
+
+            local cfg = ConfigManager:Config(selectedConfigName)
+            if cfg then
+                local data = cfg:GetData()
+                local autoloadStatus = (data and data.autoload == true) and "Enabled" or "Disabled"
+                ConfigStats:Update("Auto Load Config", autoloadStatus)
+            end
+        end
+    end,
+})
+
+local ButtonRow1 = ConfigSection:Group({})
+ButtonRow1:Button({
+    Title = "Load Config",
+    Icon = "download",
+    Justify = "Center",
+    Callback = function()
+        if selectedConfigName then
+            local cfg = ConfigManager:Config(selectedConfigName)
+            if cfg:Load() then
+                notify("Config Loaded", "Config '" .. selectedConfigName .. "' loaded successfully!", "check", 3)
+                                -- Atualizar stats
+                local data = cfg:GetData()
+                if data then
+                    local autoloadStatus = (data.autoload == true) and "Enabled" or "Disabled"
+                    ConfigStats:Update("Auto Load Config", autoloadStatus)
+                end
+                ConfigStats:Update("Current Config", selectedConfigName)
+            else
+                notify("Error", "Failed to load config!", "alert-circle", 3)
+            end
+        end
+    end,
+})
+
+ButtonRow1:Button({
+    Title = "Update Config",
+    Icon = "refresh-cw",
+    Justify = "Center",
+    Callback = function()
+        if selectedConfigName then
+            local cfg = ConfigManager:Config(selectedConfigName)
+            if cfg:Save() then
+                notify("Config Updated", "Config '" .. selectedConfigName .. "' updated successfully!", "check", 3)
+                
+                -- Atualizar total de configs
+                local allCfgs = ConfigManager:AllConfigs()
+                ConfigStats:Update("Total Configs", tostring(#allCfgs))
+            else
+                notify("Error", "Failed to update config!", "alert-circle", 3)
+            end
+        end
+    end,
+})
+
+-- Refresh Config List Button
+ConfigSection:Button({
+     Title = "Refresh Config List",
+    Icon = "rotate-ccw",
+    Callback = function()
+        local updatedConfigs = ConfigManager:AllConfigs()
+        ConfigStats:Update("Total Configs", tostring(#updatedConfigs))
+        notify("Refreshed", "Configuration list updated!", "check", 2)
+    end,
+})
+
+ConfigSection:Divider()
+
+ConfigSection:Toggle({
+    Title = "Autoload Config",    Icon = "loader",
+    Value = false,
+    Flag = "config_autoload_toggle",
+    Callback = function(value)
+        if selectedConfigName then
+            local cfg = ConfigManager:Config(selectedConfigName)
+            cfg:SetAutoLoad(value)
+            cfg:Save()
+            
+            local autoloadStatus = value and "Enabled" or "Disabled"
+            ConfigStats:Update("Auto Load Config", autoloadStatus)
+            currentAutoLoadConfig = value and selectedConfigName or "None"
+            
+            if value then
+                notify("Autoload Enabled", "Config '" .. selectedConfigName .. "' will load on startup!", "check", 3)
+            else
+                notify("Autoload Disabled", "Autoload disabled for this config!", "info", 3)
+            end
+        end
+    end,
+})
+
+ConfigSection:Divider()
+ConfigSection:Paragraph({
+    Title = "DANGER ZONE",
+    Content = "> These actions cannot be undone. Proceed with caution!",
+})
+local DangerGroup = ConfigSection:Group({})
+
+DangerGroup:Button({
+    Title = "Clear Autoload",
+    Icon = "circle-x",
+    Color = Color3.fromHex("#F59E0B"),
+    Justify = "Center",
+    Callback = function()
+        if selectedConfigName then
+            local cfg = ConfigManager:Config(selectedConfigName)
+            cfg:SetAutoLoad(false)
+            cfg:Save()
+            ConfigStats:Update("Auto Load Config", "Disabled")
+            currentAutoLoadConfig = "None"
+            notify("Autoload Cleared", "Autoload configuration cleared!", "check", 3)
+        end
+    end,
+})
+DangerGroup:Button({
+    Title = "Delete Config",
+    Icon = "trash-2",
+    Color = Color3.fromHex("#EF4444"),
+    Justify = "Center",
+    Callback = function()
+        if selectedConfigName then
+            Window:Dialog({
+                Title = "Confirm Deletion",
+                Content = "Are you sure you want to delete config '" .. selectedConfigName .. "'?\n\nThis action <font color='#EF4444'>cannot be undone</font>!",
+                Icon = "alert-triangle",
+                Buttons = {
+                    {
+                        Title = "Cancel",
+                        Variant = "Secondary",
+                        Callback = function() end,
+                    },
+                    {
+                        Title = "Delete",
+                        Variant = "Danger",
+                        Callback = function()
+                            if ConfigManager:DeleteConfig(selectedConfigName) then
+                                notify("Config Deleted", "Config '" .. selectedConfigName .. "' deleted successfully!", "trash-2", 3)
+                                -- Refresh dropdown
+                                local updatedConfigs = ConfigManager:AllConfigs()
+                                ConfigStats:Update("Total Configs", tostring(#updatedConfigs))
+                                if #updatedConfigs > 0 then
+                                    selectedConfigName = updatedConfigs[1]
+                                    ConfigStats:Update("Current Config", selectedConfigName)
+                                else
+                                    selectedConfigName = "default"
+                                    ConfigStats:Update("Current Config", "None")
+                                end
+                                ConfigStats:Update("Auto Load Config", "Disabled")
+                                currentAutoLoadConfig = "None"
+                            else
+                                notify("Error", "Failed to delete config!", "alert-circle", 3)
+                            end
+                        end,
+                    },
+                },
+            })
+        end
+    end,
+})
+
+-- Inicializar stats
+task.spawn(function()
+    task.wait(0.5)
+    local allCfgs = ConfigManager:AllConfigs()    ConfigStats:Update("Total Configs", tostring(#allCfgs))
+    
+    -- Verificar autoload
+    local autoLoadConfigs = ConfigManager:GetAutoLoadConfigs()
+    if #autoLoadConfigs > 0 then
+        currentAutoLoadConfig = autoLoadConfigs[1]
+        ConfigStats:Update("Current Config", currentAutoLoadConfig)
+        ConfigStats:Update("Auto Load Config", "Enabled")
+    else
+        ConfigStats:Update("Current Config", "None")
+        ConfigStats:Update("Auto Load Config", "None")
+    end
+end)
+
+-- ==================== NOTIFICAÇÕES INICIAIS ====================
+task.delay(0.5, function()
+    notify(
+        "Script Status",
+        "• You're now using NullHub, baby.\n• Script loaded Successfully.",
+        "rbxassetid://90057404579525",
+        3
+    )
+end)
+
+task.delay(0.5, function()
+    Window:Dialog({
+        Title = "Welcome to Null Hub",
+        Content = GameName,
+        Icon = "rbxassetid://90057404579525",
+        Buttons = {
+            {
+                Title = "Enjoy!",
+                Variant = "Primary",
+                Callback = function()
+                notify("Ty", "for choosing to use Null Hub.", "rbxassetid://90057404579525")
+                end,
+            },
+        },
+    })
+end) 
+
+
+-- ==================== GAMEMODES TAB ====================
+local GMM = GmTab:MultiSection({
+    Title = "Gamemodes Area",
+    Icon = "rows-3",
+    Opened = true,
+    Box = true,
+    BoxBorder = true,
+})
+local GamemodeSection = GMM:Tab({ Title = "Auto Modes", Icon = "repeat" })
+local SaveSection = GMM:Tab({ Title = "Save Position", Icon = "map-pin" })
+local LeaveSection = GMM:Tab({ Title = "Retry/Leave", Icon = "arrow-right-left" })
+
+-- ==================== CONFIGURAÇÃO DOS MODOS ====================
+local TRIAL_DIFFICULTIES = {"Easy"}
+local MODE_PRIORITIES = {"Trial"}
+local MODE_SCHEDULES = {
+    ["Trial"] = {minutes = {0, 30}},
+}
+local MODE_TRIAL_IDS = {
+    ["Trial"] = "Trial",
+}
+
+-- ==================== FUNÇÕES AUXILIARES DE GAMEMODES ====================
+local function GetCurrentWave()
+    pcall(function()
+        local modesInfo = LocalPlayer.PlayerGui:WaitForChild("Paradox", 10):WaitForChild("ModesInfo", 10)
+        if modesInfo and modesInfo:FindFirstChild("Wave") then
+            return tonumber(modesInfo.Wave.ContentText:match("%d+")) or 0
+        end
+    end)
+    return 0
+end
+
+local function IsAvailable(modeName)
+    local s = MODE_SCHEDULES[modeName]
+    return s and (s.always or table.find(s.minutes, os.date("*t").min)) or false
+end
+
+local function CanJoinMode(modeName)
+    return table.find(selectedModes, modeName) and not (justLeftMode[modeName] and os.time() - justLeftMode[modeName] < 55) and IsAvailable(modeName)
+end
+
+local function GetHighestPriorityAvailable()
+    for _, m in ipairs(MODE_PRIORITIES) do
+        if CanJoinMode(m) then
+            return m
+        end
+    end
+    return nil
+end
+
+local function JoinTrialMode(difficulty)
+    if joiningMode then return end
+    joiningMode = true
+    task.spawn(function()
+        repeat
+            pcall(function()
+            rp:FireServer({{{"TrialReceiver","Join",difficulty},"\006"}})
+            end)
+            task.wait(2)
+        until Modes() or not autoModesActive
+        currentMode = Modes() and "Trial" or nil
+        joiningMode = false
+    end)
+end
+
+local function LeaveCurrentMode()
+    if not currentMode then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp and SvPosition and selectedMap ~= "" then
+        task.wait(1)
+        pcall(function()
+        rp:FireServer({{{"Teleporter","Teleport",{World= selectedMap}},"\006"}})
+        end)
+        task.wait(0.5)
+        hrp.CFrame = CFrame.new(SvPosition)
+    end
+    justLeftMode[currentMode] = os.time()
+    currentMode = nil
+    joiningMode = false
+    hasJustTeleported = false
+end
+
+local TimerPara = GamemodeSection:Paragraph({
+    Title = "Timer Tracker",
+    Icon = "clock-fading",
+    Content = "Loading...",
+})
+
+task.spawn(function()
+    while true do
+        local min, sec = os.date("*t").min, os.date("*t").sec
+        local raidTimer = string.format("%02d:%02d", math.abs(min - (min < 30 and 30 or 60)), (60 - sec) % 60)
+        local wave = GetCurrentWave()
+        TimerPara:SetDesc("Wave: " .. wave .. " | Next Trial: " .. raidTimer)
+        task.wait(1)
+    end
+end)
+
+-- ==================== DROPDOWN DE MODOS E DIFICULDADE ====================
+GamemodeSection:Dropdown({
+    Title = "Select Modes",
+    Icon = "list",
+    Values = {"Trial"},
+    Multi = true,
+    Flag = "gamemodes_selected",
+    Callback = function(val) selectedModes = val or {} end,
+})
+
+GamemodeSection:Dropdown({
+    Title = "Trial Difficulty",
+    Icon = "trending-up",
+    Values = TRIAL_DIFFICULTIES,
+    Value = "Easy",
+    Flag = "gamemodes_trial_difficulty",
+    Callback = function(val)
+        selectedTrialDifficulty = val
+    end,
+})
+
+-- ==================== AUTO JOIN TOGGLE ====================
+GamemodeSection:Toggle({
+    Title = "Auto Join",
+    Icon = "door-open",
+    Value = false,
+    Flag = "gamemodes_autojoin",
+    Callback = function(Value)
+        autoModesActive = Value
+        if not Value then
+            currentMode = nil
+            joiningMode = false
+            return
+        end
+        task.spawn(function()
+            while autoModesActive do
+                pcall(function()
+                    local inMode = Modes()
+                    if not inMode and currentMode then
+                        justLeftMode[currentMode] = os.time()
+                        currentMode = nil
+                        joiningMode = false
+                    end
+                    local best = GetHighestPriorityAvailable()
+                    if not best then task.wait(5) return end
+                    if currentMode == best then task.wait(5) return end
+                    if currentMode and currentMode ~= best then
+                        LeaveCurrentMode()
+                        task.wait(2)
+                        return
+                    end
+                    if not inMode and not joiningMode then
+                        JoinTrialMode(selectedTrialDifficulty)
+                    end
+                end)
+                task.wait(1)
+            end
+        end)
+    end,
+})
+
+-- ==================== AUTO FARM MODES ====================
+GamemodeSection:Toggle({
+    Title = "Auto Farm Modes",
+    Icon = "user-cog",
+    Value = false,
+    Flag = "gamemodes_autofarm",
+    Callback = function(Value)
+        modeFarm = Value
+        if not Value then return end
+        task.spawn(function()
+            while modeFarm do
+                if not Modes() then task.wait(0.5) continue end
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if not hrp then task.wait(0.5) continue end
+
+                local target = nil
+                for _, e in ipairs(workspace:GetDescendants()) do
+                    if e:IsA("BasePart") and e:GetAttribute("Died") == false then
+                        target = e
+                        break
+                    end
+                end
+
+                if target then
+                    repeat
+                        if not modeFarm or target:GetAttribute("Died") == true then break end
+                        if not Modes() then break end
+                        char = LocalPlayer.Character
+                        hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if not hrp then break end
+                        local pivot = target:GetPivot()
+                        local pos = pivot.Position
+                        if (hrp.Position - pos).Magnitude > 6 then
+                            hrp.CFrame = pivot * CFrame.new(0, 0.5, 1.5)
+                        end
+                        RunService.Heartbeat:Wait()
+                    until target:GetAttribute("Died") == true or not target.Parent
+                    task.wait(0.1)
+                else
+                    task.wait(0.5)
+                end
+            end
+        end)
+    end,
+})
+
+-- ==================== SAVE POSITION ====================
+SaveSection:Button({
+    Title = "Save Position",
+    Icon = "map-pin",
+    Callback = function()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then SvPosition = hrp.Position end
+    end,
+})
+
+SaveSection:Dropdown({
+    Title = "Map to Leave",
+    Icon = "map",
+    Values = GetWorlds(),
+    Placeholder = "Select Map",
+    Flag = "gamemodes_map",
+    Callback = function(val) selectedMap = val or "" end,
+})
+
+-- ==================== AUTO LEAVE COM WAVE ====================
+SaveSection:Toggle({
+    Title = "Auto Leave",
+    Icon = "door-closed",
+    Value = false,
+    Flag = "gamemodes_autoleave",
+    Callback = function(Value)
+        AutoLeaveAll = Value
+        if not Value then return end
+        task.spawn(function()
+            local wasIn = false
+            while AutoLeaveAll do
+                pcall(function()
+                    local inMode = Modes()
+                    if inMode then
+                        wasIn = true
+                    elseif wasIn and not inMode then
+                        wasIn = false
+                        LeaveCurrentMode()
+                        return
+                    end
+
+                    if inMode and lvwave ~= "" then
+                        local currentWave = GetCurrentWave()
+                        if currentWave >= tonumber(lvwave) then
+                            wasIn = false
+                            LeaveCurrentMode()
+                        end
+                    end
+                    if not inMode then hasJustTeleported = false end
+                end)
+                task.wait(0.5)
+            end
+        end)
+    end,
+})
+
+-- ==================== INPUT DE WAVE PARA SAIR ====================
+LeaveSection:Input({
+    Title = "Set Wave to Leave",
+    Icon = "text-cursor-input",
+    Numeric = true,
+    Flag = "gamemodes_wave",
+    Callback = function(val) lvwave = tostring(val or "") end,
+})
+
+workspace.Game.Zones.Gacha
