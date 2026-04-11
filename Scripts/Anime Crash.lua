@@ -1549,3 +1549,17 @@ LeaveSection:Input({
 })
 
 workspace.Game.Zones.Gacha
+local args = {
+	{
+		{
+			"TrialShop",
+			"Buy",
+			{
+				"Gems Potion",
+				1
+			}
+		},
+		"\006"
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
