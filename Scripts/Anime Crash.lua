@@ -311,6 +311,43 @@ priorityDD = AutoFarmSection:Dropdown({
     end,
 })
 
+
+local function FindNearestEnemyAnyWorld(range)
+    local mobsServer = workspace:FindFirstChild("Game") 
+        and workspace.Game:FindFirstChild("Mobs") 
+        and workspace.Game.Mobs:FindFirstChild("Server")
+    
+    if not mobsServer then return nil end
+    
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+    
+    local nearest = nil
+    local nearestDist = range
+    
+    -- Varre TODOS os mundos disponíveis
+    for _, worldFolder in ipairs(mobsServer:GetChildren()) do
+        if worldFolder:IsA("Folder") or worldFolder:IsA("Model") then
+            for _, obj in ipairs(worldFolder:GetDescendants()) do
+                if obj:IsA("BasePart") 
+                    and obj.Name ~= "HumanoidRootPart"
+                    and IsNPCValid(obj)  -- Verifica Died == false
+                then
+                    local dist = (hrp.Position - obj.Position).Magnitude
+                    if dist < nearestDist then
+                        nearest = obj
+                        nearestDist = dist
+                    end
+                end
+            end
+        end
+    end
+    
+    return nearest
+end
+
+-- ==================== AUTO FARM (mantido original com ajustes) ====================
 local autoFarmToggle = AutoFarmSection:Toggle({
     Title = "Auto Farm Enemy",
     Icon = "user-cog",
@@ -319,8 +356,10 @@ local autoFarmToggle = AutoFarmSection:Toggle({
     Callback = function(Value)
         farmRunning = Value
         if not Value then return end
+        
         task.spawn(function()
             while farmRunning do
+                -- Segurança: para se entrar em Mode
                 if Modes() then
                     farmRunning = false
                     if autoFarmToggle and autoFarmToggle.Set then
@@ -332,9 +371,12 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                 end
                 
                 if #selectedNpcNames == 0 then task.wait(0.5) continue end
+                
+                -- Usa o mundo selecionado na dropdown
                 local world = workspace.Game.Mobs.Server:FindFirstChild(selectedWorld)
                 if not world then task.wait(0.5) continue end
 
+                -- Verifica prioridades
                 local hasPriority = false
                 for _, e in ipairs(world:GetDescendants()) do
                     if e:IsA("BasePart") and table.find(priorityEnemyNames, e.Name) and e:GetAttribute("Died") == false then
@@ -344,6 +386,7 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                 end
 
                 local toFarm = hasPriority and priorityEnemyNames or selectedNpcNames
+                
                 for _, name in ipairs(toFarm) do
                     if not farmRunning then break end
                     
@@ -351,6 +394,7 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
                     if not hrp then continue end
 
+                    -- Busca target específico no mundo selecionado
                     local target = nil
                     for _, e in ipairs(world:GetDescendants()) do
                          if e:IsA("BasePart") and e.Name == name and e:GetAttribute("Died") == false then
@@ -362,16 +406,23 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                     if target then
                         repeat
                             if not farmRunning or not target.Parent or target:GetAttribute("Died") == true then break end
+                            
+                            -- Re-check de prioridades durante o farm
                             if #priorityEnemyNames > 0 and not table.find(priorityEnemyNames, name) then
                                 local spawned = false
                                 for _, e in ipairs(world:GetDescendants()) do
-                                    if e:IsA("BasePart") and table.find(priorityEnemyNames, e.Name) and e:GetAttribute("Died") == false then spawned = true break end
+                                    if e:IsA("BasePart") and table.find(priorityEnemyNames, e.Name) and e:GetAttribute("Died") == false then 
+                                        spawned = true 
+                                        break 
+                                    end
                                 end
                                 if spawned then break end
                             end
+                            
                             char = LocalPlayer.Character
                             hrp = char and char:FindFirstChild("HumanoidRootPart")
                             if not hrp then break end
+                            
                             local pivot = target:GetPivot()
                             local pos = pivot.Position
                             if (hrp.Position - pos).Magnitude > 7 then
@@ -387,6 +438,7 @@ local autoFarmToggle = AutoFarmSection:Toggle({
     end,
 })
 
+-- Monitor de Modes() para bloquear/desbloquear Auto Farm
 task.spawn(function()
     while true do
         task.wait(1)
@@ -425,6 +477,7 @@ AutoFarmSection:Button({
     end,
 })
 
+-- ==================== AUTO CLICK - INDEPENDENTE DE WORLD ====================
 PlayerSection:Slider({
     Title = "Auto Click Range",
     Icon = "ruler",
@@ -447,14 +500,14 @@ PlayerSection:ToggleKeybind({
         ac = Value
         notify("AutoClick", tostring(Value), "rbxassetid://132747288758157")
         if not Value then return end
+        
         task.spawn(function()
             while ac do
-                if selectedWorld == "" then
-                    task.wait(0.5)
-                    continue
-                end
-                local target = FindNearestEnemyInRange(selectedWorld, clickRange)
+                -- Busca NPC em QUALQUER mundo dentro do range
+                local target = FindNearestEnemyAnyWorld(clickRange)
+                
                 if target and IsNPCValid(target) then
+                    -- NPC no range: usa remote com alvo específico
                     local args = {
                         {
                             {
@@ -471,6 +524,7 @@ PlayerSection:ToggleKeybind({
                     }
                     pcall(function() rp:FireServer(unpack(args)) end)
                 else
+                    -- Sem NPC no range: usa click normal (sem alvo)
                     local args = {
                         {
                             {
@@ -493,10 +547,36 @@ PlayerSection:ToggleKeybind({
     end,
 })
 
---local args = {{{"TrialReceiver","Join","Easy"},"\006"}} rp:FireServer(unpack(args))
+-- ==================== VARIÁVEIS GLOBAIS PARA STAR ROLL ====================
+local starRollActive = false
+local starRollConnections = {}
+local savedPosition = nil
+local starRollTask = nil
+local summonPart = nil -- Variável para armazenar a referência da part
 
-local savedStarRollPos = nil
+-- ==================== FUNÇÃO PARA LIMPAR CONEXÕES DO STAR ROLL ====================
+local function cleanupStarRollConnections()
+    for _, conn in ipairs(starRollConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    starRollConnections = {}
+end
 
+-- ==================== FUNÇÃO PARA CONTROLAR ESTADO DO AUTO FARM VIA STAR ROLL ====================
+local function setAutoFarmByStarRoll(allow)
+    if allow and starRollActive and farmRunning then
+        return
+    end
+    if not allow and farmRunning and autoFarmToggle and autoFarmToggle.Set then
+        farmRunning = false
+        autoFarmToggle:Set(false)
+    elseif allow and not farmRunning and autoFarmToggle and autoFarmToggle.Set and not starRollActive then
+        farmRunning = true
+        autoFarmToggle:Set(true)
+    end
+end
+
+-- ==================== STAR ROLL - LÓGICA CORRIGIDA ====================
 PlayerSection:Toggle({
     Title = "Star Roll",
     Icon = "package-open",
@@ -504,35 +584,165 @@ PlayerSection:Toggle({
     Flag = "upgrades_starroll",
     Callback = function(Value)
         autopetroll = Value
-        local summon = workspace:FindFirstChild("Game") 
+        
+        -- Busca a part Summon uma vez ao ativar
+        summonPart = workspace:FindFirstChild("Game") 
             and workspace.Game:FindFirstChild("Zones") 
             and workspace.Game.Zones:FindFirstChild("Summons") 
-            and workspace.Game.Zones.Summons:FindFirstChild("Summon")
+            and workspace.Game.Zones.Summons:FindFirstChild("GachaModel")
+        
         if Value then
-            if not farmRunning then
-                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then savedStarRollPos = hrp.CFrame end
+            -- Validação de segurança
+            if not summonPart then
+                notify("Error", "Summon part not found!", "alert-circle", 3)
+                PlayerSection:FindFirstChild("upgrades_starroll"):Set(false) -- Desliga o toggle visualmente se falhar
+                return
             end
-            if summon and summon:IsA("BasePart") then
+
+            -- Ativa flag e PARA o Auto Farm
+            starRollActive = true
+            setAutoFarmByStarRoll(false)
+            
+            -- Salva posição atual APENAS se não estivermos já salvando de um roll anterior
+            if not savedPosition then
                 local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then 
-                    hrp.CFrame = summon.CFrame + Vector3.new(0, 5, 0) 
+                    savedPosition = hrp.CFrame 
                 end
             end
-        elseif not Value and savedStarRollPos then
+            
+            -- Teleporta IMEDIATAMENTE para a posição da Star (Offset 0,0,0.5)
             local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then hrp.CFrame = savedStarRollPos end
-            savedStarRollPos = nil
-        end
-        
-        if not Value then return end
-        
-        task.spawn(function()
-            while autopetroll do
-                -- Remote comprimido em linha única
-                pcall(function() rp:FireServer({{"Pets","Summon",{useMaxRoll=true}},"\006"}) end)
-                task.wait(0.5)
+            if hrp then
+           local pivot = summonPart:GetPivot()
+                hrp.CFrame = pivot
             end
-        end)
+            
+            -- Envia remote inicial
+            pcall(function() rp:FireServer({{"Pets","Summon",{useMaxRoll=true}},"\006"}) end)
+            
+            -- Monitora PlayerGui.SummonAnimate.Gacha
+            local playerGui = LocalPlayer:WaitForChild("PlayerGui", 10)
+            if not playerGui then 
+                starRollActive = false
+                setAutoFarmByStarRoll(true)
+                return 
+            end
+            
+            local summonAnimate = playerGui:WaitForChild("SummonAnimate", 10)
+            if not summonAnimate then 
+                starRollActive = false
+                setAutoFarmByStarRoll(true)
+                return 
+            end
+            
+            local gachaFrame = summonAnimate:WaitForChild("Gacha", 10)
+            if not gachaFrame then 
+                starRollActive = false
+                setAutoFarmByStarRoll(true)
+                return 
+            end
+            
+            -- Flag para saber se já tem pet aparecido
+            local hasPetVisible = false
+            local rollAttempt = 0
+            
+            -- Função para verificar se é um frame de pet válido
+            local function isValidPetFrame(child)
+                if not child:IsA("Frame") and not child:IsA("TextButton") then
+                    return false
+                end
+                local name = child.Name:lower()
+                -- Ignora elementos de UI genéricos
+                local ignored = {"template","viewport","frame","stop","uigridthlayout","uilistlayout","uiaspectratioconstraint","uipadding","uicorner"}
+                for _, ign in ipairs(ignored) do
+                    if name:find(ign) then return false end
+                end
+                -- Aceita se tiver texto ou imagem (provável pet)
+                return child:FindFirstChild("TextLabel") or child:FindFirstChild("ImageLabel") or name:match("%w+")
+            end
+            
+            -- ChildAdded: Quando aparece um pet
+            local connAdded = gachaFrame.ChildAdded:Connect(function(child)
+                if isValidPetFrame(child) then
+                    hasPetVisible = true
+                    rollAttempt = rollAttempt + 1
+                    print("[Star Roll] Pet appeared: " .. child.Name .. " - Attempt #" .. rollAttempt)
+                    
+                    -- Reativa Auto Farm quando der o roll
+                    if starRollActive then
+                        starRollActive = false
+                        setAutoFarmByStarRoll(true)
+                        print("[Star Roll] Roll successful! Auto Farm reactivated.")
+                        
+                        -- Retorna para posição salva após 2 segundos
+                        task.delay(2, function()
+                            if savedPosition then
+                                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                if hrp then 
+                                    hrp.CFrame = savedPosition 
+                                end
+                                savedPosition = nil -- Limpa para permitir novo save na próxima ativação
+                            end
+                        end)
+                    end
+                end
+            end)
+            
+            -- ChildRemoved: Quando o pet some
+            local connRemoved = gachaFrame.ChildRemoved:Connect(function(child)
+                if isValidPetFrame(child) then
+                    hasPetVisible = false
+                    print("[Star Roll] Pet disappeared")
+                end
+            end)
+            
+            table.insert(starRollConnections, connAdded)
+            table.insert(starRollConnections, connRemoved)
+            
+            -- Loop principal: teleporta continuamente e tenta roll
+            starRollTask = task.spawn(function()
+                while starRollActive and autopetroll do
+                    -- Teleporta para a posição da star (Offset 0,0,0.5) a cada loop
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and summonPart then 
+                    local pivot = summonPart:GetPivot()
+                    hrp.CFrame = pivot
+                    end
+                    
+                    -- Tenta fazer roll a cada 2 segundos
+                    pcall(function() rp:FireServer({{"Pets","Summon",{useMaxRoll=true}},"\006"}) end)
+                    rollAttempt = rollAttempt + 1
+                    -- print("[Star Roll] Attempting roll #" .. rollAttempt) -- Opcional: reduzir spam no console
+                    
+                    task.wait(2)
+                end
+            end)
+            
+        elseif not Value then
+            -- Desativa Star Roll
+            starRollActive = false
+            
+            -- Para a task de roll
+            if starRollTask then
+                task.cancel(starRollTask)
+                starRollTask = nil
+            end
+            
+            cleanupStarRollConnections()
+
+            if savedPosition then
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then 
+                    hrp.CFrame = savedPosition 
+                end
+                savedPosition = nil
+            end
+
+            setAutoFarmByStarRoll(true)
+            print("[Star Roll] Deactivated. Auto Farm reactivated.")
+        end
     end,
 })
+
+--local args = {{{"TrialReceiver","Join","Easy"},"\006"}} rp:FireServer(unpack(args))
