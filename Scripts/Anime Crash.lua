@@ -748,6 +748,76 @@ PlayerSection:Toggle({
     end,
 })
 
+local gachaFolder = workspace:FindFirstChild("Game") 
+    and workspace.Game:FindFirstChild("Zones") 
+    and workspace.Game.Zones:FindFirstChild("Gacha")
+
+local selectedGachaName = ""
+local gachaDropdown
+
+local function RefreshGachaList()
+    local gachaList = {}
+    if gachaFolder then
+        for _, child in ipairs(gachaFolder:GetDescendants()) do
+            if child:IsA("BasePart") and child.Name == "Gacha" and child:GetAttribute("Gacha") then
+                local name = child:GetAttribute("Gacha")
+                table.insert(gachaList, name)
+            end
+        end
+    end
+    if gachaDropdown and gachaDropdown.Refresh then
+        gachaDropdown:Refresh(gachaList)
+    end
+end
+
+if gachaFolder then
+    gachaFolder.ChildAdded:Connect(function()
+        task.defer(RefreshGachaList)
+    end)
+    RefreshGachaList()
+end
+
+gachaDropdown = UpgradesSection:Dropdown({
+    Title = "Select Gacha",
+    Icon = "sparkles",
+    Values = {}, -- Será preenchido pelo RefreshGachaList
+    Flag = "gacha_selector",
+    Callback = function(val)
+        selectedGachaName = val
+        -- Teleporte para o Gacha selecionado
+        if gachaFolder then
+            for _, child in ipairs(gachaFolder:GetDescendants()) do
+                if child:IsA("BasePart") and child.Name == "Gacha" and child:GetAttribute("Gacha") == val then
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.CFrame = child:GetPivot()
+                    end
+                    break
+                end
+            end
+        end
+    end,
+})
+
+UpgradesSection:Toggle({
+    Title = "Auto Roll Gacha",
+    Icon = "repeat",
+    Value = false,
+    Flag = "gacha_auto_roll",
+    Callback = function(Value)
+        if Value then
+            task.spawn(function()
+                while Value do
+                    pcall(function()
+                        rp:FireServer(unpack({{{"Gacha","Roll",{Action="Roll"}},"\006"}}))
+                    end)
+                    task.wait(0.15)
+                end
+            end)
+        end
+    end,
+})
+
 local selectedPlanet = ""
 local AutoUpgradeLeveling = false
 
