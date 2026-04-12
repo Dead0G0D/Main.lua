@@ -310,38 +310,34 @@ local function IsNPCValid(obj)
     if not obj:IsA("BasePart") then return false end
     return obj:GetAttribute("Died") ~= true
 end
-local function FindNearestEnemyInRange(mapName, range)
-    local mobsServer = workspace:FindFirstChild("Game") 
-        and workspace.Game:FindFirstChild("Mobs") 
-        and workspace.Game.Mobs:FindFirstChild("Server")
-    
-    if not mobsServer then return nil end
-    
-    local mapFolder = mobsServer:FindFirstChild(mapName)
-    if not mapFolder then return nil end
-    
+
+local function FindNearestEnemyAnyWorld(range)
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
-    
+
     local nearest = nil
-    local nearestDist = range -- Começa com o limite do range
-    
-    for _, obj in ipairs(mapFolder:GetDescendants()) do
+    local nearestDist = range
+    local hrpPos = hrp.Position
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") 
+            and obj.Parent
             and obj.Name ~= "HumanoidRootPart"
-            and IsNPCValid(obj)
+            and obj:GetAttribute("Died") == false -- 
         then
-            local dist = (hrp.Position - obj.Position).Magnitude
+            local dist = (hrpPos - obj.Position).Magnitude
+
             if dist < nearestDist then
                 nearest = obj
                 nearestDist = dist
             end
         end
     end
-    
+
     return nearest
 end
+
 
 local npcDD
 local priorityDD
@@ -385,43 +381,6 @@ priorityDD = AutoFarmSection:Dropdown({
     end,
 })
 
-
-local function FindNearestEnemyAnyWorld(range)
-    local mobsServer = workspace:FindFirstChild("Game") 
-        and workspace.Game:FindFirstChild("Mobs") 
-        and workspace.Game.Mobs:FindFirstChild("Server")
-    
-    if not mobsServer then return nil end
-    
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-    
-    local nearest = nil
-    local nearestDist = range
-    
-    -- Varre TODOS os mundos disponíveis
-    for _, worldFolder in ipairs(mobsServer:GetChildren()) do
-        if worldFolder:IsA("Folder") or worldFolder:IsA("Model") then
-            for _, obj in ipairs(worldFolder:GetDescendants()) do
-                if obj:IsA("BasePart") 
-                    and obj.Name ~= "HumanoidRootPart"
-                    and IsNPCValid(obj)  -- Verifica Died == false
-                then
-                    local dist = (hrp.Position - obj.Position).Magnitude
-                    if dist < nearestDist then
-                        nearest = obj
-                        nearestDist = dist
-                    end
-                end
-            end
-        end
-    end
-    
-    return nearest
-end
-
--- ==================== AUTO FARM (mantido original com ajustes) ====================
 local autoFarmToggle = AutoFarmSection:Toggle({
     Title = "Auto Farm Enemy",
     Icon = "user-cog",
@@ -430,10 +389,8 @@ local autoFarmToggle = AutoFarmSection:Toggle({
     Callback = function(Value)
         farmRunning = Value
         if not Value then return end
-        
         task.spawn(function()
             while farmRunning do
-                -- Segurança: para se entrar em Mode
                 if Modes() then
                     farmRunning = false
                     if autoFarmToggle and autoFarmToggle.Set then
@@ -445,12 +402,9 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                 end
                 
                 if #selectedNpcNames == 0 then task.wait(0.5) continue end
-                
-                -- Usa o mundo selecionado na dropdown
                 local world = workspace.Game.Mobs.Server:FindFirstChild(selectedWorld)
                 if not world then task.wait(0.5) continue end
-
-                -- Verifica prioridades
+                
                 local hasPriority = false
                 for _, e in ipairs(world:GetDescendants()) do
                     if e:IsA("BasePart") and table.find(priorityEnemyNames, e.Name) and e:GetAttribute("Died") == false then
@@ -467,8 +421,7 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                     local char = LocalPlayer.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
                     if not hrp then continue end
-
-                    -- Busca target específico no mundo selecionado
+                    
                     local target = nil
                     for _, e in ipairs(world:GetDescendants()) do
                          if e:IsA("BasePart") and e.Name == name and e:GetAttribute("Died") == false then
@@ -481,7 +434,6 @@ local autoFarmToggle = AutoFarmSection:Toggle({
                         repeat
                             if not farmRunning or not target.Parent or target:GetAttribute("Died") == true then break end
                             
-                            -- Re-check de prioridades durante o farm
                             if #priorityEnemyNames > 0 and not table.find(priorityEnemyNames, name) then
                                 local spawned = false
                                 for _, e in ipairs(world:GetDescendants()) do
@@ -549,12 +501,11 @@ AutoFarmSection:Button({
          if priorityDD then priorityDD:Refresh(names, false) end
     end,
 })
---game:GetService("Players").LocalPlayer.PlayerGui.Paradox.ModesInfo.Wave
--- ==================== AUTO CLICK - INDEPENDENTE DE WORLD ====================
+
 PlayerSection:Slider({
     Title = "Auto Click Range",
     Icon = "ruler",
-    Value = { Min = 25, Max = 250, Default = 50 },
+    Value = { Min = 25, Max = 100, Default = 25 },
     Step = 5,
     Flag = "autoclick_range",
     Callback = function(value)
@@ -571,49 +522,20 @@ PlayerSection:ToggleKeybind({
     Flag = "player_autoclick",
     Callback = function(Value)
         ac = Value
-        notify("AutoClick", tostring(Value), "rbxassetid://132747288758157")
+        notify("AutoClick", tostring(Value), "rbxassetid://90057404579525")
         if not Value then return end
-        
         task.spawn(function()
             while ac do
-                -- Busca NPC em QUALQUER mundo dentro do range
                 local target = FindNearestEnemyAnyWorld(clickRange)
-                
                 if target and IsNPCValid(target) then
-                    -- NPC no range: usa remote com alvo específico
-                    local args = {
-                        {
-                            {
-                                "Action",
-                                "Action",
-                                {
-                                    Callback = "M1",
-                                    Action = "Callback",
-                                    Targets = { target }
-                                }
-                            },
-                            "\006"
-                        }
-                    }
-                    pcall(function() rp:FireServer(unpack(args)) end)
+                    pcall(function()
+                        rp:FireServer(unpack({{{"Action","Action",{Callback="M1",Action="Callback",Targets={target}}},"\006"}}))
+                    end)
                 else
-                    -- Sem NPC no range: usa click normal (sem alvo)
-                    local args = {
-                        {
-                            {
-                                "Action",
-                                "Action",
-                                {
-                                    Callback = "M1",
-                                    Action = "Callback"
-                                }
-                            },
-                            "\006"
-                        }
-                    }
-                    pcall(function() rp:FireServer(unpack(args)) end)
+                    pcall(function()
+                        rp:FireServer(unpack({{{"Action","Action",{Callback="M1",Action="Callback"}},"\006"}}))
+                    end)
                 end
-                
                 RunService.Heartbeat:Wait()
             end
         end)
@@ -790,6 +712,72 @@ PlayerSection:Toggle({
                 task.wait(15)
             end
         end)
+    end,
+})
+
+local selectedStat = ""
+local AutoUpgradeStats = false
+
+PlayerSection:Dropdown({
+    Title = "Select Stat",
+    Values = {"Energy","Gems","Star Luck","Drops","Damage"},
+    Value = selectedStat,
+    Flag = "stats_select",
+    Callback = function(val)
+        selectedStat = val
+    end,
+})
+
+PlayerSection:Toggle({
+    Title = "Auto Upgrade Stats",
+    Icon = "trending-up",
+    Value = false,
+    Flag = "stats_auto_upgrade",
+    Callback = function(state)
+        AutoUpgradeStats = state
+        if state then
+            task.spawn(function()
+                while AutoUpgradeStats do
+                    pcall(function()
+                        rp:FireServer(unpack({{{"Stats","Upgrade",{Stat=selectedStat,Amount=1}},"\006"}}))
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end,
+})
+
+local selectedPlanet = ""
+local AutoUpgradeLeveling = false
+
+UpgradesSection:Dropdown({
+    Title = "Select Upgrade Leveling",
+    Values = GetWorlds(),
+    Value = selectedPlanet,
+    Flag = "leveling_select",
+    Callback = function(val)
+        selectedPlanet = val
+    end,
+})
+
+UpgradesSection:Toggle({
+    Title = "Auto Upgrade Leveling",
+    Icon = "trending-up",
+    Value = false,
+    Flag = "leveling_auto_upgrade",
+    Callback = function(state)
+        AutoUpgradeLeveling = state
+        if state then
+            task.spawn(function()
+                while AutoUpgradeLeveling do
+                    pcall(function()
+                        rp:FireServer(unpack({{{"Leveling","Upgrade",selectedPlanet},"\006"}}))
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        end
     end,
 })
 
