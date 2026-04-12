@@ -290,11 +290,18 @@ local function GetUniqueEnemyNames()
     local names = {}
     local world = workspace.Game.Mobs.Server:FindFirstChild(selectedWorld)
     if not world then return {} end
+
     for _, enemy in ipairs(world:GetDescendants()) do
-        if enemy:IsA("BasePart") then names[enemy.Name] = true end
+        if enemy:IsA("BasePart") and enemy.Name ~= "HumanoidRootPart" then
+            names[enemy.Name] = true
+        end
     end
+
     local list = {}
-    for name in pairs(names) do table.insert(list, name) end
+    for name in pairs(names) do
+        table.insert(list, name)
+    end
+    table.sort(list)
     return list
 end
 
@@ -751,7 +758,7 @@ PlayerSection:Toggle({
     Title = "Auto Rankup",
     Icon = "gem",
     Value = false,
-    Flag = "player_autoequip",
+    Flag = "player_arankup",
     Callback = function(Value)
         autoEquip = Value
         if not Value then return end
@@ -770,7 +777,7 @@ PlayerSection:Toggle({
     Title = "Auto Equip Best All",
     Icon = "gem",
     Value = false,
-    Flag = "player_autoequip",
+    Flag = "player_autoequipbest",
     Callback = function(Value)
         autoEquip = Value
         if not Value then return end
@@ -785,6 +792,403 @@ PlayerSection:Toggle({
         end)
     end,
 })
+
+-- ==================== GAMEMODES TAB ====================
+local GMM = GmTab:MultiSection({
+    Title = "Gamemodes Area",
+    Icon = "rows-3",
+    Opened = true,
+    Box = true,
+    BoxBorder = true,
+})
+local GamemodeSection = GMM:Tab({ Title = "Auto Modes", Icon = "repeat" })
+local SaveSection = GMM:Tab({ Title = "Save Position", Icon = "map-pin" })
+local LeaveSection = GMM:Tab({ Title = "Retry/Leave", Icon = "arrow-right-left" })
+
+-- ==================== CONFIGURAÇÃO DOS MODOS ====================
+local TRIAL_DIFFICULTIES = {"Easy"}
+local RAID_DIFFICULTIES = {"Normal", "Medium", "Hard", "Extreme"}
+local MODE_PRIORITIES = {"Raid", "Trial"}
+local MODE_SCHEDULES = {
+    ["Trial"] = {minutes = {0, 30}},
+    ["Raid"] = {always = true},
+}
+
+-- ==================== FUNÇÕES AUXILIARES DE GAMEMODES ====================
+local function GetCurrentWave()
+    pcall(function()
+        local modesInfo = LocalPlayer.PlayerGui:WaitForChild("Paradox", 10):WaitForChild("ModesInfo", 10)
+        if modesInfo and modesInfo:FindFirstChild("Wave") then
+            return tonumber(modesInfo.Wave.ContentText:match("%d+")) or 0
+        end
+    end)
+    return 0
+end
+
+local function IsAvailable(modeName)
+    local s = MODE_SCHEDULES[modeName]
+    return s and (s.always or table.find(s.minutes, os.date("*t").min)) or false
+end
+
+local function CanJoinMode(modeName)
+    return table.find(selectedModes, modeName) and not (justLeftMode[modeName] and os.time() - justLeftMode[modeName] < 55) and IsAvailable(modeName)
+end
+
+local function GetHighestPriorityAvailable()
+    for _, m in ipairs(MODE_PRIORITIES) do
+        if CanJoinMode(m) then
+            return m
+        end
+    end
+    return nil
+end
+
+local function JoinMode(modeName, difficulty)
+    if joiningMode then return end
+    joiningMode = true
+    task.spawn(function()
+        repeat
+            pcall(function()
+                if modeName == "Raid" then
+                    rp:FireServer({{{"Gamemodes","Create",{Raid="Frieza Force Invasion",Gamemode="Raid",Mode=difficulty}}},"\006"})
+                else
+                    rp:FireServer({{{"TrialReceiver","Join",difficulty or "Easy"},"\006"}})
+                end
+            end)
+            task.wait(2)
+        until Modes() or not autoModesActive
+        currentMode = Modes() and modeName or nil
+        joiningMode = false
+    end)
+end
+
+local function LeaveCurrentMode()
+    if not currentMode then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp and SvPosition and selectedMap ~= "" then
+        task.wait(1)
+        pcall(function()
+            rp:FireServer({{{"Teleporter","Teleport",{World= selectedMap}},"\006"}})
+        end)
+        task.wait(0.5)
+        hrp.CFrame = CFrame.new(SvPosition)
+    end
+    justLeftMode[currentMode] = os.time()
+    currentMode = nil
+    joiningMode = false
+    hasJustTeleported = false
+end
+
+-- ==================== TIMER PARAGRAPH ====================
+local TimerPara = GamemodeSection:Paragraph({
+    Title = "Timer Tracker",
+    Icon = "clock-fading",
+    Content = "Loading...",
+})
+
+task.spawn(function()
+    while true do
+        local min, sec = os.date("*t").min, os.date("*t").sec
+        local raidTimer = string.format("%02d:%02d", math.abs(min - (min < 29 and 29 or 59)), (60 - sec) % 60)
+        local wave = GetCurrentWave()
+        TimerPara:SetDesc("Wave: " .. wave .. " | Next Trial: " .. raidTimer .. " | Raid: Always")
+        task.wait(1)
+    end
+end)
+
+-- ==================== DROPDOWN DE MODOS E DIFICULDADE ====================
+GamemodeSection:Dropdown({
+    Title = "Select Modes",
+    Icon = "list",
+    Values = {"Trial", "Raid"},
+    Multi = true,
+    Flag = "gamemodes_selected",
+    Callback = function(val) selectedModes = val or {} end,
+})
+
+GamemodeSection:Dropdown({
+    Title = "Trial Difficulty",
+    Icon = "trending-up",
+    Values = TRIAL_DIFFICULTIES,
+    Value = "",
+    Flag = "gamemodes_trial_difficulty",
+    Callback = function(val)
+        selectedTrialDifficulty = val
+    end,
+})
+
+GamemodeSection:Dropdown({
+    Title = "Raid Difficulty",
+    Icon = "sword",
+    Values = RAID_DIFFICULTIES,
+    Value = "",
+    Flag = "gamemodes_raid_difficulty",
+    Callback = function(val)
+        selectedRaidDifficulty = val
+    end,
+})
+
+-- ==================== AUTO JOIN TOGGLE ====================
+GamemodeSection:Toggle({
+    Title = "Auto Join",
+    Icon = "door-open",
+    Value = false,
+    Flag = "gamemodes_autojoin",
+    Callback = function(Value)
+        autoModesActive = Value
+        if not Value then
+            currentMode = nil
+            joiningMode = false
+            return
+        end
+        task.spawn(function()
+            while autoModesActive do
+                pcall(function()
+                    local inMode = Modes()
+                    if not inMode and currentMode then
+                        justLeftMode[currentMode] = os.time()
+                        currentMode = nil
+                        joiningMode = false
+                    end
+                    local best = GetHighestPriorityAvailable()
+                    if not best then task.wait(5) return end
+                    if currentMode == best then task.wait(5) return end
+                    if currentMode and currentMode ~= best then
+                        LeaveCurrentMode()
+                        task.wait(2)
+                        return
+                    end
+                    if not inMode and not joiningMode then
+                        local difficulty = best == "Raid" and selectedRaidDifficulty or selectedTrialDifficulty
+                        JoinMode(best, difficulty)
+                    end
+                end)
+                task.wait(1)
+            end
+        end)
+    end,
+})
+
+GamemodeSection:Toggle({
+    Title = "Auto Farm Modes",
+    Icon = "user-cog",
+    Value = false,
+    Flag = "gamemodes_autofarm",
+    Callback = function(Value)
+        modeFarm = Value
+        if not Value then return end
+        task.spawn(function()
+            while modeFarm do
+                if not Modes() then task.wait(0.5) continue end
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if not hrp then task.wait(0.5) continue end
+
+                local target = nil
+                
+                if currentMode == "Raid" then
+                    for _, e in ipairs(workspace:GetDescendants()) do
+                        if e:IsA("BasePart") and e:GetAttribute("Died") == false and e:GetAttribute("Raid") == true then
+                            target = e
+                            break
+                        end
+                    end
+                else
+                    for _, e in ipairs(workspace:GetDescendants()) do
+                        if e:IsA("BasePart") and e:GetAttribute("Died") == false then
+                            target = e
+                            break
+                        end
+                    end
+                end
+
+                if target then
+                    repeat
+                        if not modeFarm or target:GetAttribute("Died") == true then break end
+                        if not Modes() then break end
+                        char = LocalPlayer.Character
+                        hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if not hrp then break end
+                        local pivot = target:GetPivot()
+                        local pos = pivot.Position
+                        if (hrp.Position - pos).Magnitude > 6 then
+                            hrp.CFrame = pivot * CFrame.new(0, 0, 1.5)
+                        end
+                        RunService.Heartbeat:Wait()
+                    until target:GetAttribute("Died") == true or not target.Parent
+                    task.wait(0.1)
+                else
+                    task.wait(0.5)
+                end
+            end
+        end)
+    end,
+})
+
+-- ==================== SAVE POSITION ====================
+SaveSection:Button({
+    Title = "Save Position",
+    Icon = "map-pin",
+    Callback = function()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then SvPosition = hrp.Position end
+    end,
+})
+
+SaveSection:Dropdown({
+    Title = "Map to Leave",
+    Icon = "map",
+    Values = GetWorlds(),
+    Placeholder = "Select Map",
+    Flag = "gamemodes_map",
+    Callback = function(val) selectedMap = val or "" end,
+})
+
+-- ==================== AUTO LEAVE COM WAVE ====================
+SaveSection:Toggle({
+    Title = "Auto Leave",
+    Icon = "door-closed",
+    Value = false,
+    Flag = "gamemodes_autoleave",
+    Callback = function(Value)
+        AutoLeaveAll = Value
+        if not Value then return end
+        task.spawn(function()
+            local wasIn = false
+            while AutoLeaveAll do
+                pcall(function()
+                    local inMode = Modes()
+                    if inMode then
+                        wasIn = true
+                    elseif wasIn and not inMode then
+                        wasIn = false
+                        LeaveCurrentMode()
+                        return
+                    end
+
+                    if inMode and lvwave ~= "" then
+                        local currentWave = GetCurrentWave()
+                        if currentWave >= tonumber(lvwave) then
+                            wasIn = false
+                            LeaveCurrentMode()
+                        end
+                    end
+                    if not inMode then hasJustTeleported = false end
+                end)
+                task.wait(0.5)
+            end
+        end)
+    end,
+})
+
+-- ==================== INPUT DE WAVE PARA SAIR ====================
+LeaveSection:Input({
+    Title = "Set Wave to Leave",
+    Icon = "text-cursor-input",
+    Numeric = true,
+    Flag = "gamemodes_wave",
+    Callback = function(val) lvwave = tostring(val or "") end,
+})
+
+local ShopMulti = GmTab:MultiSection({
+    Title = "Shop & Upgrades",
+    Icon = "shopping-cart",
+    Opened = true,
+    Box = true,
+    BoxBorder = true,
+})
+
+local UpgradesTab = ShopMulti:Tab({ Title = "Upgrades", Icon = "trending-up" })
+local TrialShopTab = ShopMulti:Tab({ Title = "Trial Shop", Icon = "store" })
+
+local selectedUpgrade = ""
+local selectedTrialItem = ""
+local trialQuantity = 1
+local AutoBuyUpgrade = false
+local AutoBuyTrial = false
+UpgradesTab:Dropdown({
+    Title = "Select Upgrade",
+    Values = {
+        "Energy", "Gems", "Luck", "Damage", "Movement Speed",
+        "Fast Roll", "More Open Star", "More Gacha Open",
+        "More Storage", "Drop"
+    },
+    Value = nil,
+    Flag = "shop_upgrade_type",
+    Callback = function(val)
+        selectedUpgrade = val
+    end,
+})
+
+UpgradesTab:Toggle({
+    Title = "Auto Buy Upgrade",
+    Icon = "shopping-cart",
+    Value = false,
+    Flag = "shop_autobuy_upgrade",
+    Callback = function(state)
+        AutoBuyUpgrade = state
+        if state then
+            task.spawn(function()
+                while AutoBuyUpgrade do
+                    if selectedUpgrade ~= "" then
+                        pcall(function()
+                        rp:FireServer(unpack({{{"Upgrade","Buy",{Upgrade=selectedUpgrade}},"\006"}}))
+                        end)
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end,
+})
+
+TrialShopTab:Dropdown({
+    Title = "Select Item",
+    Values = {
+        "Energy Potion", "Gems Potion", "Damage Potion",
+        "Exp Potion", "Drop Potion", "Luck Potion", "Frieza Key"
+    },
+    Value = nil,
+    Flag = "shop_trial_item",
+    Callback = function(val)
+        selectedTrialItem = val
+    end,
+})
+
+TrialShopTab:Input({
+    Title = "Quantity",
+    Icon = "hash",
+    Numeric = true,
+    Value = "1",
+    Flag = "shop_trial_qty",
+    Callback = function(val)
+        trialQuantity = math.max(tonumber(val) or 1, 1)
+    end,
+})
+
+TrialShopTab:Toggle({
+    Title = "Auto Buy Trial Item",
+    Icon = "shopping-bag",
+    Value = false,
+    Flag = "shop_autobuy_trial",
+    Callback = function(state)
+        AutoBuyTrial = state
+        if state then
+            task.spawn(function()
+                while AutoBuyTrial do
+                    if selectedTrialItem ~= "" then
+                        pcall(function()
+                         rp:FireServer(unpack({{{"TrialShop","Buy",{selectedTrialItem, trialQuantity}},"\006"}}))
+                        end)
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end,
+})
+
 
 -- ==================== MISC SECTION (Redesigned) ====================
 local MiscSection = ConfigTab:Section({ 
@@ -1247,7 +1651,6 @@ task.spawn(function()
     end
 end)
 
--- ==================== NOTIFICAÇÕES INICIAIS ====================
 task.delay(0.5, function()
     notify(
         "Script Status",
@@ -1273,293 +1676,3 @@ task.delay(0.5, function()
         },
     })
 end) 
-
-
--- ==================== GAMEMODES TAB ====================
-local GMM = GmTab:MultiSection({
-    Title = "Gamemodes Area",
-    Icon = "rows-3",
-    Opened = true,
-    Box = true,
-    BoxBorder = true,
-})
-local GamemodeSection = GMM:Tab({ Title = "Auto Modes", Icon = "repeat" })
-local SaveSection = GMM:Tab({ Title = "Save Position", Icon = "map-pin" })
-local LeaveSection = GMM:Tab({ Title = "Retry/Leave", Icon = "arrow-right-left" })
-
--- ==================== CONFIGURAÇÃO DOS MODOS ====================
-local TRIAL_DIFFICULTIES = {"Easy"}
-local MODE_PRIORITIES = {"Trial"}
-local MODE_SCHEDULES = {
-    ["Trial"] = {minutes = {0, 30}},
-}
-local MODE_TRIAL_IDS = {
-    ["Trial"] = "Trial",
-}
-
--- ==================== FUNÇÕES AUXILIARES DE GAMEMODES ====================
-local function GetCurrentWave()
-    pcall(function()
-        local modesInfo = LocalPlayer.PlayerGui:WaitForChild("Paradox", 10):WaitForChild("ModesInfo", 10)
-        if modesInfo and modesInfo:FindFirstChild("Wave") then
-            return tonumber(modesInfo.Wave.ContentText:match("%d+")) or 0
-        end
-    end)
-    return 0
-end
-
-local function IsAvailable(modeName)
-    local s = MODE_SCHEDULES[modeName]
-    return s and (s.always or table.find(s.minutes, os.date("*t").min)) or false
-end
-
-local function CanJoinMode(modeName)
-    return table.find(selectedModes, modeName) and not (justLeftMode[modeName] and os.time() - justLeftMode[modeName] < 55) and IsAvailable(modeName)
-end
-
-local function GetHighestPriorityAvailable()
-    for _, m in ipairs(MODE_PRIORITIES) do
-        if CanJoinMode(m) then
-            return m
-        end
-    end
-    return nil
-end
-
-local function JoinTrialMode(difficulty)
-    if joiningMode then return end
-    joiningMode = true
-    task.spawn(function()
-        repeat
-            pcall(function()
-            rp:FireServer({{{"TrialReceiver","Join",difficulty},"\006"}})
-            end)
-            task.wait(2)
-        until Modes() or not autoModesActive
-        currentMode = Modes() and "Trial" or nil
-        joiningMode = false
-    end)
-end
-
-local function LeaveCurrentMode()
-    if not currentMode then return end
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp and SvPosition and selectedMap ~= "" then
-        task.wait(1)
-        pcall(function()
-        rp:FireServer({{{"Teleporter","Teleport",{World= selectedMap}},"\006"}})
-        end)
-        task.wait(0.5)
-        hrp.CFrame = CFrame.new(SvPosition)
-    end
-    justLeftMode[currentMode] = os.time()
-    currentMode = nil
-    joiningMode = false
-    hasJustTeleported = false
-end
-
-local TimerPara = GamemodeSection:Paragraph({
-    Title = "Timer Tracker",
-    Icon = "clock-fading",
-    Content = "Loading...",
-})
-
-task.spawn(function()
-    while true do
-        local min, sec = os.date("*t").min, os.date("*t").sec
-        local raidTimer = string.format("%02d:%02d", math.abs(min - (min < 30 and 30 or 60)), (60 - sec) % 60)
-        local wave = GetCurrentWave()
-        TimerPara:SetDesc("Wave: " .. wave .. " | Next Trial: " .. raidTimer)
-        task.wait(1)
-    end
-end)
-
--- ==================== DROPDOWN DE MODOS E DIFICULDADE ====================
-GamemodeSection:Dropdown({
-    Title = "Select Modes",
-    Icon = "list",
-    Values = {"Trial"},
-    Multi = true,
-    Flag = "gamemodes_selected",
-    Callback = function(val) selectedModes = val or {} end,
-})
-
-GamemodeSection:Dropdown({
-    Title = "Trial Difficulty",
-    Icon = "trending-up",
-    Values = TRIAL_DIFFICULTIES,
-    Value = "Easy",
-    Flag = "gamemodes_trial_difficulty",
-    Callback = function(val)
-        selectedTrialDifficulty = val
-    end,
-})
-
--- ==================== AUTO JOIN TOGGLE ====================
-GamemodeSection:Toggle({
-    Title = "Auto Join",
-    Icon = "door-open",
-    Value = false,
-    Flag = "gamemodes_autojoin",
-    Callback = function(Value)
-        autoModesActive = Value
-        if not Value then
-            currentMode = nil
-            joiningMode = false
-            return
-        end
-        task.spawn(function()
-            while autoModesActive do
-                pcall(function()
-                    local inMode = Modes()
-                    if not inMode and currentMode then
-                        justLeftMode[currentMode] = os.time()
-                        currentMode = nil
-                        joiningMode = false
-                    end
-                    local best = GetHighestPriorityAvailable()
-                    if not best then task.wait(5) return end
-                    if currentMode == best then task.wait(5) return end
-                    if currentMode and currentMode ~= best then
-                        LeaveCurrentMode()
-                        task.wait(2)
-                        return
-                    end
-                    if not inMode and not joiningMode then
-                        JoinTrialMode(selectedTrialDifficulty)
-                    end
-                end)
-                task.wait(1)
-            end
-        end)
-    end,
-})
-
--- ==================== AUTO FARM MODES ====================
-GamemodeSection:Toggle({
-    Title = "Auto Farm Modes",
-    Icon = "user-cog",
-    Value = false,
-    Flag = "gamemodes_autofarm",
-    Callback = function(Value)
-        modeFarm = Value
-        if not Value then return end
-        task.spawn(function()
-            while modeFarm do
-                if not Modes() then task.wait(0.5) continue end
-                local char = LocalPlayer.Character
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if not hrp then task.wait(0.5) continue end
-
-                local target = nil
-                for _, e in ipairs(workspace:GetDescendants()) do
-                    if e:IsA("BasePart") and e:GetAttribute("Died") == false then
-                        target = e
-                        break
-                    end
-                end
-
-                if target then
-                    repeat
-                        if not modeFarm or target:GetAttribute("Died") == true then break end
-                        if not Modes() then break end
-                        char = LocalPlayer.Character
-                        hrp = char and char:FindFirstChild("HumanoidRootPart")
-                        if not hrp then break end
-                        local pivot = target:GetPivot()
-                        local pos = pivot.Position
-                        if (hrp.Position - pos).Magnitude > 6 then
-                            hrp.CFrame = pivot * CFrame.new(0, 0.5, 1.5)
-                        end
-                        RunService.Heartbeat:Wait()
-                    until target:GetAttribute("Died") == true or not target.Parent
-                    task.wait(0.1)
-                else
-                    task.wait(0.5)
-                end
-            end
-        end)
-    end,
-})
-
--- ==================== SAVE POSITION ====================
-SaveSection:Button({
-    Title = "Save Position",
-    Icon = "map-pin",
-    Callback = function()
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then SvPosition = hrp.Position end
-    end,
-})
-
-SaveSection:Dropdown({
-    Title = "Map to Leave",
-    Icon = "map",
-    Values = GetWorlds(),
-    Placeholder = "Select Map",
-    Flag = "gamemodes_map",
-    Callback = function(val) selectedMap = val or "" end,
-})
-
--- ==================== AUTO LEAVE COM WAVE ====================
-SaveSection:Toggle({
-    Title = "Auto Leave",
-    Icon = "door-closed",
-    Value = false,
-    Flag = "gamemodes_autoleave",
-    Callback = function(Value)
-        AutoLeaveAll = Value
-        if not Value then return end
-        task.spawn(function()
-            local wasIn = false
-            while AutoLeaveAll do
-                pcall(function()
-                    local inMode = Modes()
-                    if inMode then
-                        wasIn = true
-                    elseif wasIn and not inMode then
-                        wasIn = false
-                        LeaveCurrentMode()
-                        return
-                    end
-
-                    if inMode and lvwave ~= "" then
-                        local currentWave = GetCurrentWave()
-                        if currentWave >= tonumber(lvwave) then
-                            wasIn = false
-                            LeaveCurrentMode()
-                        end
-                    end
-                    if not inMode then hasJustTeleported = false end
-                end)
-                task.wait(0.5)
-            end
-        end)
-    end,
-})
-
--- ==================== INPUT DE WAVE PARA SAIR ====================
-LeaveSection:Input({
-    Title = "Set Wave to Leave",
-    Icon = "text-cursor-input",
-    Numeric = true,
-    Flag = "gamemodes_wave",
-    Callback = function(val) lvwave = tostring(val or "") end,
-})
-
-workspace.Game.Zones.Gacha
-local args = {
-	{
-		{
-			"TrialShop",
-			"Buy",
-			{
-				"Gems Potion",
-				1
-			}
-		},
-		"\006"
-	}
-}
-game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
